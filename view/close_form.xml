@@ -26,6 +26,7 @@ this repository contains the full copyright notices and license terms. -->
             <field name="logs" colspan="4"/>
         </page>
     </notebook>
+<!--
     <group col="6" colspan="4" id="states_buttons" yfill="1">
         <group col="4" colspan="4" id="states" yfill="1">
             <label name="state"/>
@@ -55,4 +56,5 @@ this repository contains the full copyright notices and license terms. -->
             <field name="total" xalign="1.0" xexpand="0"/>
         </group>
     </group>
+-->
 </form>

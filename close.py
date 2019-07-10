@@ -88,8 +88,7 @@ class Close(Workflow, ModelSQL, ModelView):
         digits=(16, Eval('currency_digits', 2)),
         states=_STATES,
         depends=_DEPENDS + ['currency_digits'])
-    logs = fields.One2Many('cashier.close.log', 'close',
-        'Logs', readonly=True)
+    logs = fields.One2Many('log_action', 'resource', 'Logs')
 
     @classmethod
     def __setup__(cls):
@@ -252,6 +251,7 @@ class Document(ModelSQL, ModelView):
             return self.close.state
 
 
+#TODO Delete
 class CloseLog(ModelSQL, ModelView):
     'Cashier Close Log'
     __name__ = 'cashier.close.log'
