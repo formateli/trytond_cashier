@@ -19,6 +19,8 @@ class CashierTestCase(ModuleTestCase):
         Cashier = pool.get('cashier.cashier')
         CreditCardTerminal = pool.get('cashier.ccterminal')
         CreditCard = pool.get('cashier.ccterminal.creditcard')
+        Close = pool.get('cashier.close')
+        Document = pool.get('cashier.close.document')
 
 
 def suite():

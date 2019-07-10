@@ -3,6 +3,7 @@
 
 from trytond.pool import Pool
 from . import cashier
+from . import close
 
 
 def register():
@@ -10,4 +11,6 @@ def register():
         cashier.Cashier,
         cashier.CreditCardTerminal,
         cashier.CreditCard,
+        close.Close,
+        close.Document,
         module='cashier', type_='model')
