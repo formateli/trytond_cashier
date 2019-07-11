@@ -79,7 +79,7 @@ this repository contains the full copyright notices and license terms. -->
         </record>
         <record model="ir.model.access" id="access_cashier_admin">
             <field name="model" search="[('model', '=', 'cashier.cashier')]"/>
-            <field name="group" ref="group_cashier_admin"/>
+            <field name="group" ref="res.group_admin"/>
             <field name="perm_read" eval="True"/>
             <field name="perm_write" eval="True"/>
             <field name="perm_create" eval="True"/>
@@ -147,41 +147,6 @@ this repository contains the full copyright notices and license terms. -->
             <field name="model">cashier.ccterminal.creditcard</field>
             <field name="type">tree</field>
             <field name="name">creditcard_tree</field>
-        </record>
-        <record model="ir.action.act_window" id="act_creditcard_form">
-            <field name="name">Credit Cards</field>
-            <field name="res_model">cashier.ccterminal.creditcard</field>
-            <field name="search_value"></field>
-        </record>
-        <record model="ir.action.act_window.view" id="act_creditcard_form_view1">
-            <field name="sequence" eval="10"/>
-            <field name="view" ref="creditcard_view_tree"/>
-            <field name="act_window" ref="act_creditcard_form"/>
-        </record>
-        <record model="ir.action.act_window.view" id="act_creditcard_form_view2">
-            <field name="sequence" eval="20"/>
-            <field name="view" ref="creditcard_view_form"/>
-            <field name="act_window" ref="act_creditcard_form"/>
-        </record>
-
-        <menuitem name="Credit Cards" id="menu_creditcard"
-            sequence="30" action="act_creditcard_form"
-            parent="menu_configuration"/>
-
-        <record model="ir.model.access" id="access_creditcard">
-            <field name="model" search="[('model', '=', 'cashier.ccterminal.creditcard')]"/>
-            <field name="perm_read" eval="True"/>
-            <field name="perm_write" eval="False"/>
-            <field name="perm_create" eval="False"/>
-            <field name="perm_delete" eval="False"/>
-        </record>
-        <record model="ir.model.access" id="access_creditcard_admin">
-            <field name="model" search="[('model', '=', 'cashier.ccterminal.creditcard')]"/>
-            <field name="group" ref="group_cashier_admin"/>
-            <field name="perm_read" eval="True"/>
-            <field name="perm_write" eval="True"/>
-            <field name="perm_create" eval="True"/>
-            <field name="perm_delete" eval="True"/>
         </record>
     </data>
 </tryton>

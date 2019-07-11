@@ -2,9 +2,10 @@
 <!-- This file is part of trytond-cashier module. The COPYRIGHT file at the top level of
 this repository contains the full copyright notices and license terms. -->
 <tree>
-    <field name="cashier"/>
     <field name="name"/>
+    <field name="cashier"/>
     <field name="cash_bank"/>
     <field name="receipt_type"/>
+    <field name="company"/>
     <field name="active"/>
 </tree>

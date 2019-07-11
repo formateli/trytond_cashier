@@ -13,5 +13,5 @@ this repository contains the full copyright notices and license terms. -->
     <label name="receipt_type_cash"/>
     <field name="receipt_type_cash"/>
     <newline/>
-    <field name="ccterminals" colspan="6"/>
+    <field name="ccterminals" widget="many2many" colspan="6"/>
 </form>

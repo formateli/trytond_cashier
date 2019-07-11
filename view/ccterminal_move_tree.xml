@@ -3,9 +3,7 @@
 this repository contains the full copyright notices and license terms. -->
 <tree>
     <field name="close"/>
-    <field name="type"/>
-    <field name="date"/>
-    <field name="entity"/>
-    <field name="reference"/>
+    <field name="ccterminal"/>
+    <field name="creditcard"/>
     <field name="amount"/>
 </tree>

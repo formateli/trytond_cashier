@@ -8,10 +8,12 @@ from trytond.pyson import Eval, If, Bool
 from trytond.i18n import gettext
 from trytond.exceptions import UserError
 from decimal import Decimal
+from trytond.modules.log_action import write_log
 
 __all__ = [
         'Close',
-        'Document'
+        'Document',
+        'CreditCardTerminalMove'
     ]
 
 _STATES = {
@@ -84,6 +86,13 @@ class Close(Workflow, ModelSQL, ModelView):
             digits=(16, Eval('currency_digits', 2)),
             depends=['currency_digits']),
         'on_change_with_document_amount')
+    ccterminals = fields.One2Many('cashier.close.ccterminal.move',
+        'close', 'Credit Card Terminals',
+        states=_STATES, depends=_DEPENDS)
+    ccterminal_amount = fields.Function(fields.Numeric('Document amount',
+            digits=(16, Eval('currency_digits', 2)),
+            depends=['currency_digits']),
+        'on_change_with_ccterminal_amount')
     cash = fields.Numeric('Cash',
         digits=(16, Eval('currency_digits', 2)),
         states=_STATES,
@@ -126,6 +135,10 @@ class Close(Workflow, ModelSQL, ModelView):
         return Transaction().context.get('company')
 
     @staticmethod
+    def default_state():
+        return 'draft'
+
+    @staticmethod
     def default_currency():
         Company = Pool().get('company.company')
         company = Transaction().context.get('company')
@@ -164,29 +177,50 @@ class Close(Workflow, ModelSQL, ModelView):
                 res += document.amount
         return res
 
+    @fields.depends('ccterminals')
+    def on_change_with_ccterminal_amount(self, name=None):
+        res = Decimal('0.0')
+        if self.ccterminals:
+            for ccterminal in self.ccterminals:
+                res += ccterminal.amount
+        return res
+
+    @classmethod
+    def create(cls, vlist):
+        closes = super(Close, cls).create(vlist)
+        write_log('Created', closes)
+        return closes
+
+#    @classmethod
+#    def write(cls, *args):
+#        super(Close, cls).write(*args)
+#        actions = iter(args)
+#        for closes, values in zip(actions, actions):
+#            write_log('Modified', closes)
+
     @classmethod
     @ModelView.button
     @Workflow.transition('draft')
     def draft(cls, closes):
-        pass
+        write_log('Draft', closes)
 
     @classmethod
     @ModelView.button
     @Workflow.transition('confirmed')
     def confirm(cls, closes):
-        pass
+        write_log('Confirmed', closes)
 
     @classmethod
     @ModelView.button
     @Workflow.transition('posted')
     def post(cls, closes):
-        pass
+        write_log('Posted', closes)
 
     @classmethod
     @ModelView.button
     @Workflow.transition('cancel')
     def cancel(cls, closes):
-        pass
+        write_log('Cancelled', closes)
 
 
 class Document(ModelSQL, ModelView):
@@ -213,7 +247,7 @@ class Document(ModelSQL, ModelView):
         'Cash/Bank document', ondelete='RESTRICT',
         states=_STATES_DOC, depends=_DEPENDS_DOC)
     close_state = fields.Function(
-        fields.Selection(STATES, 'Purchase State'),
+        fields.Selection(STATES, 'Close State'),
         'on_change_with_close_state')
 
     @classmethod
@@ -251,25 +285,50 @@ class Document(ModelSQL, ModelView):
             return self.close.state
 
 
-#TODO Delete
-class CloseLog(ModelSQL, ModelView):
-    'Cashier Close Log'
-    __name__ = 'cashier.close.log'
-    name = fields.Char('Action')
-    date = fields.DateTime('Date', states={'readonly': True})
-    user = fields.Many2One('res.user', 'User', readonly=True)
-    close = fields.Many2One('cashier.close', 'Close', required=True,
-        ondelete='CASCADE')
+class CreditCardTerminalMove(ModelSQL, ModelView):
+    "Credit Card Terminal Move"
+    __name__ = "cashier.close.ccterminal.move"
 
-    @classmethod
-    def __setup__(cls):
-        super(CloseLog, cls).__setup__()
-        cls._order = [
-                ('id', 'DESC'),
-            ]
+    close = fields.Many2One('cashier.close',
+        'Close', required=True)
+    ccterminal = fields.Many2One('cashier.ccterminal',
+        'Credit Card Terminal', required=True,
+        domain=[
+            ('cashier', '=', Eval(
+                '_parent_close', {}).get(
+                'cashier', -1)),
+        ], states=_STATES_DOC, depends=_DEPENDS_DOC)
+    creditcard = fields.Many2One('cashier.ccterminal.creditcard',
+        'Credit Card', required=True,
+        domain=[
+            If(
+                Bool(Eval('ccterminal')),
+                [('ccterminal', '=', Eval('ccterminal'))],
+                [('ccterminal', '=', -1)]
+            ),
+        ], states=_STATES_DOC, depends=_DEPENDS_DOC + ['ccterminal'])
+    amount = fields.Numeric('Amount', required=True,
+        states=_STATES_DOC,
+        digits=(16, Eval('currency_digits', 2)),
+        depends=_DEPENDS_DOC + ['currency_digits'])
+    currency_digits = fields.Function(fields.Integer('Currency Digits'),
+        'on_change_with_currency_digits')
+    close_state = fields.Function(
+        fields.Selection(STATES, 'Close State'),
+        'on_change_with_close_state')
 
-    @staticmethod
-    def default_date():
-        pool = Pool()
-        Date = pool.get('ir.date')
-        return Date.today()
+    @fields.depends('close', '_parent_close.currency_digits')
+    def on_change_with_currency_digits(self, name=None):
+        if self.close:
+            return self.close.currency_digits
+        return 2
+
+    @fields.depends('close', '_parent_close.state')
+    def on_change_with_close_state(self, name=None):
+        if self.close:
+            return self.close.state
+
+
+
+
+

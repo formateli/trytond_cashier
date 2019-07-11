@@ -24,7 +24,14 @@ class Cashier(ModelSQL, ModelView):
         ], select=True)
     name = fields.Char('Name', required=True, translate=True)
     ccterminals = fields.One2Many('cashier.ccterminal', 'cashier',
-        'Credit Card Terminals')
+        'Credit Card Terminals',
+        domain=[
+            ('company', '=', Eval('company')),
+            ['OR',
+                ('cashier', '=', None),
+                ('cashier', '=', Eval('id'))
+            ]
+        ], depends=['company', 'id'])
     cash_bank_cash = fields.Many2One('cash_bank.cash_bank',
             'Cash', required=True,
             domain=[
@@ -55,17 +62,23 @@ class Cashier(ModelSQL, ModelView):
 class CreditCardTerminal(ModelSQL, ModelView):
     'Credit Card Terminal'
     __name__ = 'cashier.ccterminal'
-    cashier = fields.Many2One(
-        'cashier.cashier', 'Cashier', required=True)
+    company = fields.Many2One('company.company', 'Company', required=True,
+        states={
+            'readonly': True,
+        },
+        domain=[
+            ('id', If(Eval('context', {}).contains('company'), '=', '!='),
+                Eval('context', {}).get('company', -1)),
+        ], select=True)
+    cashier = fields.Many2One('cashier.cashier', 'Cashier',
+        ondelete='RESTRICT')
     name = fields.Char('Name', required=True, translate=True)
     cash_bank = fields.Many2One('cash_bank.cash_bank',
             'Bank', required=True,
             domain=[
-                ('company', '=', Eval(
-                    '_parent_cashier', {}).get(
-                    'company', -1)),
+                ('company', '=', Eval('company')),
                 ('type', '=', 'bank')
-            ])
+            ], depends=['company'])
     receipt_type = fields.Many2One('cash_bank.receipt_type',
         'Receipt Type', required=True,
         domain=[
@@ -79,6 +92,10 @@ class CreditCardTerminal(ModelSQL, ModelView):
     creditcards = fields.One2Many('cashier.ccterminal.creditcard',
         'ccterminal', 'Credit Cards Accepted')
     active = fields.Boolean('Active')
+
+    @staticmethod
+    def default_company():
+        return Transaction().context.get('company')
 
     @staticmethod
     def default_active():
@@ -111,4 +128,4 @@ class CreditCard(ModelSQL, ModelView):
         return 4
 
     def get_comission_digits(self, name=None):
-        return self.default_comission_digits
+        return self.default_comission_digits()

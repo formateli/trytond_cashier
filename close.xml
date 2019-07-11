@@ -16,6 +16,19 @@ this repository contains the full copyright notices and license terms. -->
             <field name="name">document_tree</field>
         </record>
 
+        <!-- Credit Card Terminar Move -->
+
+        <record model="ir.ui.view" id="ccterminal_move_view_form">
+            <field name="model">cashier.close.ccterminal.move</field>
+            <field name="type">form</field>
+            <field name="name">ccterminal_move_form</field>
+        </record>
+        <record model="ir.ui.view" id="ccterminal_move_view_tree">
+            <field name="model">cashier.close.ccterminal.move</field>
+            <field name="type">tree</field>
+            <field name="name">ccterminal_move_tree</field>
+        </record>
+
 
         <!-- Close -->
 
