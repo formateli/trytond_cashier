@@ -1,0 +1,40 @@
+<?xml version="1.0"?>
+<tryton>
+    <data>
+        <record model="ir.ui.view" id="cashier_configuration_view_form">
+            <field name="model">cashier.configuration</field>
+            <field name="type">form</field>
+            <field name="name">configuration_form</field>
+        </record>
+        <record model="ir.action.act_window" id="act_cashier_configuration_form">
+            <field name="name">Cashier Configuration</field>
+            <field name="res_model">cashier.configuration</field>
+        </record>
+        <record model="ir.action.act_window.view"
+                id="act_cashier_configuration_view1">
+            <field name="sequence" eval="1"/>
+            <field name="view" ref="cashier_configuration_view_form"/>
+            <field name="act_window" ref="act_cashier_configuration_form"/>
+        </record>
+
+        <menuitem parent="menu_configuration"
+            action="act_cashier_configuration_form"
+            id="menu_configuration_conf" sequence="5" icon="tryton-list"/>
+
+        <record model="ir.model.access" id="access_configuration">
+            <field name="model" search="[('model', '=', 'cashier.configuration')]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_delete" eval="False"/>
+        </record>
+        <record model="ir.model.access" id="access_configuration_admin">
+            <field name="model" search="[('model', '=', 'cashier.configuration')]"/>
+            <field name="group" ref="group_cashier_admin"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_delete" eval="True"/>
+        </record>
+    </data>
+</tryton>

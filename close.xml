@@ -29,6 +29,24 @@ this repository contains the full copyright notices and license terms. -->
             <field name="name">ccterminal_move_tree</field>
         </record>
 
+        <!-- Logs -->
+
+        <record model="ir.model.access" id="access_group_log">
+            <field name="model" search="[('model', '=', 'cashier.close.log_action')]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_delete" eval="False"/>
+        </record>
+        <record model="ir.model.access" id="access_group_log_admin">
+            <field name="model" search="[('model', '=', 'cashier.close.log_action')]"/>
+            <field name="group" ref="res.group_admin"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_delete" eval="True"/>
+        </record>
+
 
         <!-- Close -->
 
@@ -161,6 +179,23 @@ this repository contains the full copyright notices and license terms. -->
         <record model="ir.model.button-res.group"
                 id="close_cancel_button_group_cashier_admin">
             <field name="button" ref="close_cancel_button"/>
+            <field name="group" ref="group_cashier_admin"/>
+        </record>
+
+        <!-- Sequence -->
+
+        <record model="ir.sequence.type" id="sequence_type_cashier_close">
+            <field name="name">Cashier Closes</field>
+            <field name="code">cashier.close</field>
+        </record>
+        <record model="ir.sequence.type-res.group"
+                id="sequence_type_cashier_close_group_admin">
+            <field name="sequence_type" ref="sequence_type_cashier_close"/>
+            <field name="group" ref="res.group_admin"/>
+        </record>
+        <record model="ir.sequence.type-res.group"
+                id="sequence_type_cashier_close_group_cashier_admin">
+            <field name="sequence_type" ref="sequence_type_cashier_close"/>
             <field name="group" ref="group_cashier_admin"/>
         </record>
     </data>

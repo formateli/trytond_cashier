@@ -1,4 +1,4 @@
-#This file is part of tryton-cashier project. The COPYRIGHT file at the top level of
+#This file is part of tryton-cashier module. The COPYRIGHT file at the top level of
 #this repository contains the full copyright notices and license terms.
 from trytond.transaction import Transaction
 from trytond.pool import Pool
@@ -8,12 +8,13 @@ from trytond.pyson import Eval, If, Bool
 from trytond.i18n import gettext
 from trytond.exceptions import UserError
 from decimal import Decimal
-from trytond.modules.log_action import write_log
+from trytond.modules.log_action import LogActionMixin, write_log
 
 __all__ = [
         'Close',
         'Document',
-        'CreditCardTerminalMove'
+        'CreditCardTerminalMove',
+        'CloseLog'
     ]
 
 _STATES = {
@@ -64,7 +65,7 @@ class Close(Workflow, ModelSQL, ModelView):
         domain=[
             If(Eval('state').in_(['draft', 'confirmed']),
                 [
-                    ('state', '=', 'draft'),
+                    ('state', 'in', ['draft', 'confirmed']),
                     ['OR',
                         ('cashier_close', '=', None),
                         ('cashier_close', '=', Eval('id')),
@@ -97,7 +98,7 @@ class Close(Workflow, ModelSQL, ModelView):
         digits=(16, Eval('currency_digits', 2)),
         states=_STATES,
         depends=_DEPENDS + ['currency_digits'])
-    logs = fields.One2Many('log_action', 'resource', 'Logs')
+    logs = fields.One2Many('cashier.close.log_action', 'resource', 'Logs')
 
     @classmethod
     def __setup__(cls):
@@ -185,18 +186,32 @@ class Close(Workflow, ModelSQL, ModelView):
                 res += ccterminal.amount
         return res
 
+    def get_rec_name(self, name):
+        if self.number:
+            return self.number
+        return str(self.id)
+
+    @classmethod
+    def search_rec_name(cls, name, clause):
+        return [('number',) + tuple(clause[1:])]
+
+    @classmethod
+    def set_number(cls, closes):
+        pool = Pool()
+        Sequence = pool.get('ir.sequence')
+        Config = pool.get('cashier.configuration')
+        config = Config(1)
+        for close in closes:
+            if close.number:
+                continue
+            close.number = Sequence.get_id(config.close_seq.id)
+        cls.save(closes)
+
     @classmethod
     def create(cls, vlist):
         closes = super(Close, cls).create(vlist)
         write_log('Created', closes)
         return closes
-
-#    @classmethod
-#    def write(cls, *args):
-#        super(Close, cls).write(*args)
-#        actions = iter(args)
-#        for closes, values in zip(actions, actions):
-#            write_log('Modified', closes)
 
     @classmethod
     @ModelView.button
@@ -208,6 +223,20 @@ class Close(Workflow, ModelSQL, ModelView):
     @ModelView.button
     @Workflow.transition('confirmed')
     def confirm(cls, closes):
+        pool = Pool()
+        Sale = pool.get('sale.sale')
+        sales = []
+        for close in closes:
+            if not close.sales:
+                raise UserError(
+                    gettext('cashier.close_no_sales',
+                        close=close.rec_name,
+                    ))
+            for sale in close.sales:
+                sales.append(sale)
+        Sale.quote(sales)
+        Sale.confirm(sales)
+        cls.set_number(closes)
         write_log('Confirmed', closes)
 
     @classmethod
@@ -329,6 +358,8 @@ class CreditCardTerminalMove(ModelSQL, ModelView):
             return self.close.state
 
 
-
-
-
+class CloseLog(LogActionMixin):
+    "Close Logs"
+    __name__ = "cashier.close.log_action" 
+    resource = fields.Many2One('cashier.close',
+        'Close', required=True, select=True)
