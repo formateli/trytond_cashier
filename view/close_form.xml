@@ -9,11 +9,24 @@ this repository contains the full copyright notices and license terms. -->
     <label name="cashier"/>
     <field name="cashier"/>
     <newline/>
-    <label name="cash"/>
-    <field name="cash"/>
+    <group col="8" colspan="4" id="totals">
+        <label name="sale_amount"/>
+        <field name="sale_amount"/>
+        <label name="diff"/>
+        <field name="diff"/>
+        <newline/>
+        <label name="cash"/>
+        <field name="cash"/>
+        <label name="document_amount"/>
+        <field name="document_amount"/>
+        <label name="ccterminal_amount"/>
+        <field name="ccterminal_amount"/>
+        <label name="customer_receivable_amount"/>
+        <field name="customer_receivable_amount"/>
+    </group>
     <notebook colspan="4">
         <page name="sales">
-            <field name="sales" colspan="4"/>
+            <field name="sales" widget="many2many" colspan="4"/>
         </page>
         <page name="ccterminals">
             <field name="ccterminals" colspan="4"/>

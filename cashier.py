@@ -129,3 +129,12 @@ class CreditCard(ModelSQL, ModelView):
 
     def get_comission_digits(self, name=None):
         return self.default_comission_digits()
+
+    def get_rec_name(self, name):
+        if self.type:
+            return self.type
+        return str(self.id)
+
+    @classmethod
+    def search_rec_name(cls, name, clause):
+        return [('type',) + tuple(clause[1:])]

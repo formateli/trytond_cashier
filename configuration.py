@@ -25,9 +25,8 @@ class Configuration(
     close_seq = fields.MultiValue(fields.Many2One(
         'ir.sequence', "Close Sequence", required=True,
         domain=[
-            ('company', 'in',
-                [Eval('context', {}).get('company', -1), None]),
-            ('code', '=', 'casher.close'),
+            ('company', 'in', [Eval('context', {}).get('company', -1), None]),
+            ('code', '=', 'cashier.close'),
         ]))
     diff_account = fields.MultiValue(fields.Many2One('account.account',
         'Diff Account', required=True,
@@ -53,8 +52,7 @@ class ConfigurationSequences(ModelSQL, CompanyValueMixin):
     close_seq = fields.Many2One(
         'ir.sequence', "Close Sequence", 
         domain=[
-            ('company', 'in',
-                [Eval('context', {}).get('company', -1), None]),
+            ('company', 'in', [Eval('context', {}).get('company', -1), None]),
             ('code', '=', 'cashier.close'),
         ])
 

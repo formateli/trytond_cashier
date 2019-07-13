@@ -91,7 +91,7 @@ class Close(Workflow, ModelSQL, ModelView):
     ccterminals = fields.One2Many('cashier.close.ccterminal.move',
         'close', 'Credit Card Terminals',
         states=_STATES, depends=_DEPENDS)
-    ccterminal_amount = fields.Function(fields.Numeric('Document amount',
+    ccterminal_amount = fields.Function(fields.Numeric('Credit Card amount',
             digits=(16, Eval('currency_digits', 2)),
             depends=['currency_digits']),
         'on_change_with_ccterminal_amount')
@@ -216,11 +216,12 @@ class Close(Workflow, ModelSQL, ModelView):
 
     def get_diff(self, name):
         sale = self._get_amount_val(self.sale_amount)
+        cash = self._get_amount_val(self.cash)
         document = self._get_amount_val(self.document_amount)
         ccterminal = self._get_amount_val(self.ccterminal_amount)
         cr = self._get_amount_val(self.customer_receivable_amount)
 
-        res = sale - (document + ccterminal + cr)
+        res = sale - (cash + document + ccterminal + cr)
         return res
 
     def get_rec_name(self, name):
@@ -387,6 +388,7 @@ class Close(Workflow, ModelSQL, ModelView):
                         -cct.amount,
                         cct.ccterminal.cash_bank.payment_method.debit_account,
                         None, None))
+                #TODO bank comision
 
             for rcv in close.customers_receivable:
                 lines.append(
@@ -570,4 +572,4 @@ class CloseLog(LogActionMixin):
     "Cashier Close Logs"
     __name__ = "cashier.close.log_action" 
     resource = fields.Many2One('cashier.close',
-        'Close', required=True, select=True)
+        'Close', ondelete='CASCADE', select=True)
