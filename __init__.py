@@ -12,12 +12,15 @@ def register():
     Pool.register(
         configuration.Configuration,
         configuration.ConfigurationSequences,
+        configuration.ConfigurationParties,
+        configuration.ConfigurationAccounts,
         cashier.Cashier,
         cashier.CreditCardTerminal,
         cashier.CreditCard,
         close.Close,
         close.Document,
         close.CreditCardTerminalMove,
+        close.CustomerReceivable,
         close.CloseLog,
         sale.Sale,
         module='cashier', type_='model')

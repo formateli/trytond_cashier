@@ -14,6 +14,7 @@ __all__ = [
         'Close',
         'Document',
         'CreditCardTerminalMove',
+        'CustomerReceivable',
         'CloseLog'
     ]
 
@@ -65,7 +66,7 @@ class Close(Workflow, ModelSQL, ModelView):
         domain=[
             If(Eval('state').in_(['draft', 'confirmed']),
                 [
-                    ('state', 'in', ['draft', 'confirmed']),
+                    ('state', 'in', ['draft', 'quotation']),
                     ['OR',
                         ('cashier_close', '=', None),
                         ('cashier_close', '=', Eval('id')),
@@ -94,10 +95,22 @@ class Close(Workflow, ModelSQL, ModelView):
             digits=(16, Eval('currency_digits', 2)),
             depends=['currency_digits']),
         'on_change_with_ccterminal_amount')
-    cash = fields.Numeric('Cash',
+    customers_receivable = fields.One2Many(
+        'cashier.close.customer_receivable', 'close', 'Customers Receivable',
+        states=_STATES, depends=_DEPENDS)
+    customer_receivable_amount = fields.Function(fields.Numeric(
+            'Customers Receivable amount',
+            digits=(16, Eval('currency_digits', 2)),
+            depends=['currency_digits']),
+        'on_change_with_customer_receivable_amount')
+    cash = fields.Numeric('Cash', required=True,
         digits=(16, Eval('currency_digits', 2)),
         states=_STATES,
         depends=_DEPENDS + ['currency_digits'])
+    diff = fields.Function(fields.Numeric('Diff',
+            digits=(16, Eval('currency_digits', 2)),
+            depends=['currency_digits']),
+        'get_diff')
     logs = fields.One2Many('cashier.close.log_action', 'resource', 'Logs')
 
     @classmethod
@@ -138,6 +151,10 @@ class Close(Workflow, ModelSQL, ModelView):
     @staticmethod
     def default_state():
         return 'draft'
+
+    @staticmethod
+    def default_cash():
+        return Decimal('0.0')
 
     @staticmethod
     def default_currency():
@@ -186,6 +203,26 @@ class Close(Workflow, ModelSQL, ModelView):
                 res += ccterminal.amount
         return res
 
+    @fields.depends('customers_receivable')
+    def on_change_with_customer_receivable_amount(self, name=None):
+        res = Decimal('0.0')
+        if self.customers_receivable:
+            for cr in self.customers_receivable:
+                res += cr.amount
+        return res
+
+    def _get_amount_val(self, amount):
+        return amount if amount else Decimal('0.0')
+
+    def get_diff(self, name):
+        sale = self._get_amount_val(self.sale_amount)
+        document = self._get_amount_val(self.document_amount)
+        ccterminal = self._get_amount_val(self.ccterminal_amount)
+        cr = self._get_amount_val(self.customer_receivable_amount)
+
+        res = sale - (document + ccterminal + cr)
+        return res
+
     def get_rec_name(self, name):
         if self.number:
             return self.number
@@ -214,9 +251,87 @@ class Close(Workflow, ModelSQL, ModelView):
         return closes
 
     @classmethod
+    def delete(cls, closes):
+        for close in closes:
+            if close.state not in ['draft']:
+                raise UserError(
+                    gettext('cashier.close_delete_draft',
+                        close=close.rec_name
+                    ))
+        super(Close, cls).delete(closes)
+
+    @classmethod
+    def _sales_to_invoice(cls, sales):
+        Invoice = Pool().get('account.invoice')
+        Shipment = Pool().get('stock.shipment.out')
+        invoices = []
+        for sale in sales:
+            if sale.invoice_method != 'order' or \
+                    sale.shipment_method != 'order':
+                continue
+            if sale.state != 'processing':
+                continue
+            if sale.shipments:
+                if len(sale.shipments) > 1:
+                    continue
+                for ship in sale.shipments:
+                    if ship.__class__.__name__ != 'stock.shipment.out':
+                        continue
+                    if ship.state != 'waiting':
+                        continue
+                    Shipment.assign([ship,])
+                    Shipment.pack([ship,])
+                    Shipment.done([ship,])
+
+            for inv in sale.invoices:
+                if inv.state == 'draft':
+                    inv.invoice_date = sale.sale_date
+                    inv.save()
+                    invoices.append(inv)
+
+        if invoices:
+            Invoice.post(invoices)
+
+    @classmethod
+    def _get_receipt_line(cls, description, amount, account, party, invoice):
+        pool = Pool()
+        Line = pool.get('cash_bank.receipt.line')
+        line = Line(
+            party=party,
+            invoice=invoice,
+            account=account,
+            amount=amount,
+            description=description,
+        )
+        return line
+
+    @classmethod
+    def _get_documents(cls, documents):
+        pool = Pool()
+        Doc = pool.get('cash_bank.document')
+        docs = []
+        for doc in documents:
+            d = Doc(
+                type=doc.type,
+                date=doc.date,
+                reference=doc.reference,
+                entity=doc.entity,
+                amount=doc.amount
+            )
+            doc.cash_bank_document=d
+            docs.append(d)
+        return docs
+
+    @classmethod
     @ModelView.button
     @Workflow.transition('draft')
     def draft(cls, closes):
+        pool = Pool()
+        Sale = pool.get('sale.sale')
+        sales = []
+        for close in closes:
+            sales += close.sales
+        Sale.draft(sales)
         write_log('Draft', closes)
 
     @classmethod
@@ -232,10 +347,8 @@ class Close(Workflow, ModelSQL, ModelView):
                     gettext('cashier.close_no_sales',
                         close=close.rec_name,
                     ))
-            for sale in close.sales:
-                sales.append(sale)
+            sales += close.sales
         Sale.quote(sales)
-        Sale.confirm(sales)
         cls.set_number(closes)
         write_log('Confirmed', closes)
 
@@ -243,12 +356,86 @@ class Close(Workflow, ModelSQL, ModelView):
     @ModelView.button
     @Workflow.transition('posted')
     def post(cls, closes):
+        pool = Pool()
+        Config = pool.get('cashier.configuration')
+        Sale = pool.get('sale.sale')
+        Receipt = pool.get('cash_bank.receipt')
+
+        config = Config(1)
+        receipts=[]
+
+        for close in closes:
+            Sale.confirm(close.sales)
+            Sale.process(close.sales)
+            cls._sales_to_invoice(close.sales)
+
+            lines = []
+            for sale in close.sales:
+                invoice = sale.invoices[0]
+                lines.append(
+                    cls._get_receipt_line(
+                        'Cashier Close', #TODO Improve, gettext
+                        invoice.amount_to_pay,
+                        invoice.account,
+                        invoice.party,
+                        invoice))
+
+            for cct in close.ccterminals:
+                lines.append(
+                    cls._get_receipt_line(
+                        'Cashier Close - ' + cct.creditcard.type, #TODO Improve, gettext
+                        -cct.amount,
+                        cct.ccterminal.cash_bank.payment_method.debit_account,
+                        None, None))
+
+            for rcv in close.customers_receivable:
+                lines.append(
+                    cls._get_receipt_line(
+                        'Cashier Close', #TODO Improve, gettext
+                        -rcv.amount,
+                        rcv.party.account_receivable,
+                        rcv.party,
+                        None))
+
+            if close.diff != 0:
+                amount = close.diff
+                if close.diff > 0:
+                    amount = -amount
+                lines.append(
+                    cls._get_receipt_line(
+                        'Cashier Close Diff', #TODO Improve, gettext
+                        amount,
+                        config.diff_account,
+                        None, None))
+
+            cash_receipt = Receipt(
+                date=close.date,
+                cash_bank=close.cashier.cash_bank_cash,
+                type=close.cashier.receipt_type_cash,
+                description='Cashier Close ' + close.number, #TODO Improve, gettext
+                party=config.party_sale,
+                cash=close.cash,
+                documents=cls._get_documents(close.documents),
+                lines=lines
+            )
+            cash_receipt.save()
+
+            receipts.append(cash_receipt)
+
+        Receipt.confirm(receipts)
+        Receipt.post(receipts)
         write_log('Posted', closes)
 
     @classmethod
     @ModelView.button
     @Workflow.transition('cancel')
     def cancel(cls, closes):
+        pool = Pool()
+        Sale = pool.get('sale.sale')
+        sales = []
+        for close in closes:
+            sales += close.sales
+        Sale.cancel(sales)
         write_log('Cancelled', closes)
 
 
@@ -271,7 +458,7 @@ class Document(ModelSQL, ModelView):
     entity = fields.Char('Entity', size=None,
         states=_STATES_DOC, depends=_DEPENDS_DOC)
     currency_digits = fields.Function(fields.Integer('Currency Digits'),
-        'get_currency_digits')
+        'on_change_with_currency_digits')
     cash_bank_document = fields.Many2One('cash_bank.document',
         'Cash/Bank document', ondelete='RESTRICT',
         states=_STATES_DOC, depends=_DEPENDS_DOC)
@@ -292,20 +479,10 @@ class Document(ModelSQL, ModelView):
     def default_amount():
         return Decimal('0.0')
 
-    @staticmethod
-    def default_currency_digits():
-        return Document._get_currency_digits()
-
-    def get_currency_digits(self, name=None):
-        return Document._get_currency_digits()
-
-    @staticmethod
-    def _get_currency_digits():
-        Company = Pool().get('company.company')
-        company = Transaction().context.get('company')
-        if company:
-            company = Company(company)
-            return company.currency.digits
+    @fields.depends('close', '_parent_close.currency_digits')
+    def on_change_with_currency_digits(self, name=None):
+        if self.close:
+            return self.close.currency_digits
         return 2
 
     @fields.depends('close', '_parent_close.state')
@@ -315,7 +492,7 @@ class Document(ModelSQL, ModelView):
 
 
 class CreditCardTerminalMove(ModelSQL, ModelView):
-    "Credit Card Terminal Move"
+    "Cashier Close Credit Card Terminal Move"
     __name__ = "cashier.close.ccterminal.move"
 
     close = fields.Many2One('cashier.close',
@@ -358,8 +535,39 @@ class CreditCardTerminalMove(ModelSQL, ModelView):
             return self.close.state
 
 
+class CustomerReceivable(ModelSQL, ModelView):
+    "Cashier Close Customer Receivable"
+    __name__ = "cashier.close.customer_receivable"
+
+    close = fields.Many2One('cashier.close',
+        'Close', required=True)
+    party = fields.Many2One('party.party',
+        'Party', required=True,
+        states=_STATES_DOC, depends=_DEPENDS_DOC)
+    amount = fields.Numeric('Amount', required=True,
+        states=_STATES_DOC,
+        digits=(16, Eval('currency_digits', 2)),
+        depends=_DEPENDS_DOC + ['currency_digits'])
+    currency_digits = fields.Function(fields.Integer('Currency Digits'),
+        'on_change_with_currency_digits')
+    close_state = fields.Function(
+        fields.Selection(STATES, 'Close State'),
+        'on_change_with_close_state')
+
+    @fields.depends('close', '_parent_close.currency_digits')
+    def on_change_with_currency_digits(self, name=None):
+        if self.close:
+            return self.close.currency_digits
+        return 2
+
+    @fields.depends('close', '_parent_close.state')
+    def on_change_with_close_state(self, name=None):
+        if self.close:
+            return self.close.state
+
+
 class CloseLog(LogActionMixin):
-    "Close Logs"
+    "Cashier Close Logs"
     __name__ = "cashier.close.log_action" 
     resource = fields.Many2One('cashier.close',
         'Close', required=True, select=True)

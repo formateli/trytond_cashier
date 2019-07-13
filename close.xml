@@ -29,6 +29,19 @@ this repository contains the full copyright notices and license terms. -->
             <field name="name">ccterminal_move_tree</field>
         </record>
 
+        <!-- Customer Receivable -->
+
+        <record model="ir.ui.view" id="customer_receivable_view_form">
+            <field name="model">cashier.close.customer_receivable</field>
+            <field name="type">form</field>
+            <field name="name">customer_receivable_form</field>
+        </record>
+        <record model="ir.ui.view" id="customer_receivable_view_tree">
+            <field name="model">cashier.close.customer_receivable</field>
+            <field name="type">tree</field>
+            <field name="name">customer_receivable_tree</field>
+        </record>
+
         <!-- Logs -->
 
         <record model="ir.model.access" id="access_group_log">

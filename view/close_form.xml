@@ -15,8 +15,14 @@ this repository contains the full copyright notices and license terms. -->
         <page name="sales">
             <field name="sales" colspan="4"/>
         </page>
+        <page name="ccterminals">
+            <field name="ccterminals" colspan="4"/>
+        </page>
         <page name="documents">
             <field name="documents" colspan="4"/>
+        </page>
+        <page name="customers_receivable">
+            <field name="customers_receivable" colspan="4"/>
         </page>
         <page string="Info" id="info">
             <label name="company"/>
