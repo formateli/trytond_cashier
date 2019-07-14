@@ -408,7 +408,7 @@ class Close(Workflow, ModelSQL, ModelView):
                     cls._get_receipt_line(
                         'Cashier Close - ' + cct.creditcard.type, #TODO Improve, gettext
                         -cct.amount,
-                        cct.ccterminal.cash_bank.payment_method.debit_account,
+                        cct.ccterminal.cash_bank.account,
                         None, None))
                 #TODO bank comision
 
