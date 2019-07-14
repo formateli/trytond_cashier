@@ -167,7 +167,7 @@ class CashierTestCase(ModuleTestCase):
             for sale in close.sales:
                 self.assertEqual(sale.invoices[0].state, 'paid')
 
-            # Other case
+            # Case: Include cash
 
             sale_1 = self._create_sale(
                 date, party, product, Decimal('742.49'))
@@ -190,6 +190,49 @@ class CashierTestCase(ModuleTestCase):
             )
             close.save()
             self.assertEqual(close.diff, Decimal('202.49'))
+
+            Close.confirm([close])
+            Close.post([close])
+
+            # Case: Without cash
+
+            sale_1 = self._create_sale(
+                date, party, product, Decimal('742.49'))
+
+            close = Close(
+                cashier=cashier,
+                date=date,
+                sales=[sale_1],
+                ccterminals=[
+                    self._create_ccterminal_move(
+                        cashier.ccterminals[0], 0, Decimal('100.0')),
+                    self._create_ccterminal_move(
+                        cashier.ccterminals[0], 1, Decimal('200.0')),
+                    ],
+                customers_receivable=[
+                    self._create_customer_receivable(
+                        party_1, Decimal('120.0')),
+                    ]
+            )
+            close.save()
+            self.assertEqual(close.diff, Decimal('322.49'))
+
+            Close.confirm([close])
+            Close.post([close])
+
+            # Case: Just cash
+
+            sale_1 = self._create_sale(
+                date, party, product, Decimal('659.97'))
+
+            close = Close(
+                cashier=cashier,
+                date=date,
+                sales=[sale_1],
+                cash=Decimal('1000.0')
+            )
+            close.save()
+            self.assertEqual(close.diff, Decimal('-340.03'))
 
             Close.confirm([close])
             Close.post([close])

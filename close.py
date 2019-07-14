@@ -81,20 +81,20 @@ class Close(Workflow, ModelSQL, ModelView):
     sale_amount = fields.Function(fields.Numeric('Sale amount',
             digits=(16, Eval('currency_digits', 2)),
             depends=['currency_digits']),
-        'on_change_with_sale_amount')
+        'get_sale_amount')
     documents = fields.One2Many('cashier.close.document', 'close', 'Documents',
         states=_STATES, depends=_DEPENDS)
     document_amount = fields.Function(fields.Numeric('Document amount',
             digits=(16, Eval('currency_digits', 2)),
             depends=['currency_digits']),
-        'on_change_with_document_amount')
+        'get_document_amount')
     ccterminals = fields.One2Many('cashier.close.ccterminal.move',
         'close', 'Credit Card Terminals',
         states=_STATES, depends=_DEPENDS)
     ccterminal_amount = fields.Function(fields.Numeric('Credit Card amount',
             digits=(16, Eval('currency_digits', 2)),
             depends=['currency_digits']),
-        'on_change_with_ccterminal_amount')
+        'get_ccterminal_amount')
     customers_receivable = fields.One2Many(
         'cashier.close.customer_receivable', 'close', 'Customers Receivable',
         states=_STATES, depends=_DEPENDS)
@@ -102,7 +102,7 @@ class Close(Workflow, ModelSQL, ModelView):
             'Customers Receivable amount',
             digits=(16, Eval('currency_digits', 2)),
             depends=['currency_digits']),
-        'on_change_with_customer_receivable_amount')
+        'get_customer_receivable_amount')
     cash = fields.Numeric('Cash', required=True,
         digits=(16, Eval('currency_digits', 2)),
         states=_STATES,
@@ -111,6 +111,8 @@ class Close(Workflow, ModelSQL, ModelView):
             digits=(16, Eval('currency_digits', 2)),
             depends=['currency_digits']),
         'get_diff')
+    cash_bank_receipt = fields.Many2One('cash_bank.receipt',
+        'Receipt', readonly=True)
     logs = fields.One2Many('cashier.close.log_action', 'resource', 'Logs')
 
     @classmethod
@@ -179,49 +181,69 @@ class Close(Workflow, ModelSQL, ModelView):
             return self.currency.digits
         return 2
 
-    @fields.depends('sales')
-    def on_change_with_sale_amount(self, name=None):
+    @fields.depends('cash', 'sales', 'documents',
+        'ccterminals', 'customers_receivable')
+    def on_change_cash(self):
+        self.sale_amount = self.get_sale_amount()
+        self.document_amount = self.get_document_amount()
+        self.ccterminal_amount = self.get_ccterminal_amount()
+        self.customer_receivable_amount = \
+            self.get_customer_receivable_amount()
+        self.diff = self.get_diff()
+
+    @fields.depends(methods=['on_change_cash'])
+    def on_change_sales(self):
+        self.on_change_cash()
+
+    @fields.depends(methods=['on_change_cash'])
+    def on_change_documents(self):
+        self.on_change_cash()
+
+    @fields.depends(methods=['on_change_cash'])
+    def on_change_ccterminals(self):
+        self.on_change_cash()
+
+    @fields.depends(methods=['on_change_cash'])
+    def on_change_customers_receivable(self):
+        self.on_change_cash()
+
+    def _get_amount(self, field, name='amount'):
         res = Decimal('0.0')
-        if self.sales:
-            for sale in self.sales:
-                res += sale.total_amount
+        if field:
+            for f in field:
+                amount = getattr(f, name)
+                if amount:
+                    res += amount
         return res
+
+    @fields.depends('sales')
+    def get_sale_amount(self, name=None):
+        return self._get_amount(self.sales, 'total_amount')
 
     @fields.depends('documents')
-    def on_change_with_document_amount(self, name=None):
-        res = Decimal('0.0')
-        if self.documents:
-            for document in self.documents:
-                res += document.amount
-        return res
+    def get_document_amount(self, name=None):
+        return self._get_amount(self.documents)
 
     @fields.depends('ccterminals')
-    def on_change_with_ccterminal_amount(self, name=None):
-        res = Decimal('0.0')
-        if self.ccterminals:
-            for ccterminal in self.ccterminals:
-                res += ccterminal.amount
-        return res
+    def get_ccterminal_amount(self, name=None):
+        return self._get_amount(self.ccterminals)
 
     @fields.depends('customers_receivable')
-    def on_change_with_customer_receivable_amount(self, name=None):
-        res = Decimal('0.0')
-        if self.customers_receivable:
-            for cr in self.customers_receivable:
-                res += cr.amount
-        return res
+    def get_customer_receivable_amount(self, name=None):
+        return self._get_amount(self.customers_receivable)
 
-    def _get_amount_val(self, amount):
+    def _get_amount_or_zero(self, amount):
         return amount if amount else Decimal('0.0')
 
-    def get_diff(self, name):
-        sale = self._get_amount_val(self.sale_amount)
-        cash = self._get_amount_val(self.cash)
-        document = self._get_amount_val(self.document_amount)
-        ccterminal = self._get_amount_val(self.ccterminal_amount)
-        cr = self._get_amount_val(self.customer_receivable_amount)
-
-        res = sale - (cash + document + ccterminal + cr)
+    @fields.depends('cash', 'document_amount',
+            'ccterminal_amount',
+            'customer_receivable_amount')
+    def get_diff(self, name=None):
+        res = self._get_amount_or_zero(self.sale_amount) - (
+            self._get_amount_or_zero(self.cash) +
+            self._get_amount_or_zero(self.document_amount) +
+            self._get_amount_or_zero(self.ccterminal_amount) +
+            self._get_amount_or_zero(self.customer_receivable_amount))
         return res
 
     def get_rec_name(self, name):
@@ -400,13 +422,10 @@ class Close(Workflow, ModelSQL, ModelView):
                         None))
 
             if close.diff != 0:
-                amount = close.diff
-                if close.diff > 0:
-                    amount = -amount
                 lines.append(
                     cls._get_receipt_line(
                         'Cashier Close Diff', #TODO Improve, gettext
-                        amount,
+                        -close.diff,
                         config.diff_account,
                         None, None))
 
@@ -421,6 +440,9 @@ class Close(Workflow, ModelSQL, ModelView):
                 lines=lines
             )
             cash_receipt.save()
+
+            close.cash_bank_receipt = cash_receipt
+            close.save()
 
             receipts.append(cash_receipt)
 

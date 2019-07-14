@@ -10,10 +10,7 @@ this repository contains the full copyright notices and license terms. -->
     <field name="active"/>
     <label name="cash_bank"/>
     <field name="cash_bank"/>
-    <label name="receipt_type"/>
-    <field name="receipt_type"/>
     <label name="company"/>
     <field name="company"/>
-    <newline/>
     <field name="creditcards" colspan="4"/>
 </form>

@@ -79,16 +79,6 @@ class CreditCardTerminal(ModelSQL, ModelView):
                 ('company', '=', Eval('company')),
                 ('type', '=', 'bank')
             ], depends=['company'])
-    receipt_type = fields.Many2One('cash_bank.receipt_type',
-        'Receipt Type', required=True,
-        domain=[
-            If(
-                Bool(Eval('cash_bank')),
-                [('cash_bank', '=', Eval('cash_bank'))],
-                [('cash_bank', '=', -1)]
-            ),
-            ('type', '=', 'in')
-        ], depends=['cash_bank'])
     creditcards = fields.One2Many('cashier.ccterminal.creditcard',
         'ccterminal', 'Credit Cards Accepted')
     active = fields.Boolean('Active')

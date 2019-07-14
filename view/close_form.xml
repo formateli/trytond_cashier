@@ -17,10 +17,10 @@ this repository contains the full copyright notices and license terms. -->
         <newline/>
         <label name="cash"/>
         <field name="cash"/>
-        <label name="document_amount"/>
-        <field name="document_amount"/>
         <label name="ccterminal_amount"/>
         <field name="ccterminal_amount"/>
+        <label name="document_amount"/>
+        <field name="document_amount"/>
         <label name="customer_receivable_amount"/>
         <field name="customer_receivable_amount"/>
     </group>
@@ -37,46 +37,28 @@ this repository contains the full copyright notices and license terms. -->
         <page name="customers_receivable">
             <field name="customers_receivable" colspan="4"/>
         </page>
-        <page string="Info" id="info">
+        <page col="6" string="Info" id="info">
             <label name="company"/>
             <field name="company"/>
             <label name="currency"/>
             <field name="currency"/>
-            <field name="logs" colspan="4"
+            <label name="cash_bank_receipt"/>
+            <field name="cash_bank_receipt"/>
+            <field name="logs" colspan="6"
                 view_ids="log_action.log_view_tree,log_action.log_view_form"/>
         </page>
     </notebook>
-    <group col="6" colspan="4" id="states_buttons" yfill="1">
-        <group col="4" colspan="4" id="states" yfill="1">
-            <label name="state"/>
-            <field name="state"/>
-<!--
-            <group col="2" colspan="2" id="amount_1" yfill="1">
-                <label name="total_lines" xalign="1.0" xexpand="1"/>
-                <field name="total_lines" xalign="1.0" xexpand="0"/>
-                <label name="diff" xalign="1.0" xexpand="1"/>
-                <field name="diff" xalign="1.0" xexpand="0"/>
-            </group>
--->
-            <group col="-1" colspan="4" id="buttons">
-                <button name="cancel" string="Cancel"
-                    icon="tryton-cancel"/>
-                <button name="draft" string="Draft"/>
-                <button name="confirm" string="Confirm"
-                    icon="tryton-ok"/>
-                <button name="post" string="Post"
-                    icon="tryton-go-next"/>
-            </group>
+    <group col="6" colspan="4" id="states" yfill="1">
+        <label name="state"/>
+        <field name="state"/>
+        <group col="-1" colspan="4" id="buttons">
+            <button name="cancel" string="Cancel"
+                icon="tryton-cancel"/>
+            <button name="draft" string="Draft"/>
+            <button name="confirm" string="Confirm"
+                icon="tryton-ok"/>
+            <button name="post" string="Post"
+                icon="tryton-go-next"/>
         </group>
-<!--
-        <group col="2" colspan="2" id="amount_2" yfill="1">
-            <label name="cash" xalign="1.0" xexpand="1"/>
-            <field name="cash" xalign="1.0" xexpand="0"/>
-            <label name="total_documents" xalign="1.0" xexpand="1"/>
-            <field name="total_documents" xalign="1.0" xexpand="0"/>
-            <label name="total" xalign="1.0" xexpand="1"/>
-            <field name="total" xalign="1.0" xexpand="0"/>
-        </group>
--->
     </group>
 </form>
