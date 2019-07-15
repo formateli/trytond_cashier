@@ -10,4 +10,8 @@ this repository contains the full copyright notices and license terms. -->
     <field name="creditcard"/>
     <label name="amount"/>
     <field name="amount"/>
+    <label name="comission"/>
+    <field name="comission"/>
+    <label name="comission_amount"/>
+    <field name="comission_amount"/>
 </form>

@@ -80,7 +80,7 @@ class CashierTestCase(ModuleTestCase):
 
             # Cashier
 
-            cashier = self._create_cashier(cash, bank)
+            cashier = self._create_cashier(cash, bank, account_expense)
 
             # Cashier Close
 
@@ -269,26 +269,26 @@ class CashierTestCase(ModuleTestCase):
         type_.save()
         return type_
 
-    def _create_cashier(self, cash, bank):
+    def _create_cashier(self, cash, bank, account_expense):
         Cashier = Pool().get('cashier.cashier')
 
         cashier = Cashier(
             name='Cashier 1',
-            ccterminals=self._create_ccterminal(bank),
+            ccterminals=self._create_ccterminal(bank, account_expense),
             cash_bank_cash=cash,
             receipt_type_cash=cash.receipt_types[0],
         )
         cashier.save()
         return cashier
 
-    def _create_ccterminal(self, bank):
+    def _create_ccterminal(self, bank, account_expense):
         CreditCardTerminal = Pool().get('cashier.ccterminal')
 
         creditcards = []
         creditcards.append(
-            self._create_creditcard('visa', Decimal('0.1')))
+            self._create_creditcard('visa', Decimal('0.1'), account_expense))
         creditcards.append(
-            self._create_creditcard('master', Decimal('0.2')))
+            self._create_creditcard('master', Decimal('0.2'), account_expense))
 
         ccterminal = CreditCardTerminal(
             name='Terminal Bank 1',
@@ -299,11 +299,12 @@ class CashierTestCase(ModuleTestCase):
 
         return [ccterminal,]
 
-    def _create_creditcard(self, type_, comission):
+    def _create_creditcard(self, type_, comission, account_expense):
         CreditCard = Pool().get('cashier.ccterminal.creditcard')
         cc = CreditCard(
             type=type_,
-            comission=comission
+            comission=comission,
+            account=account_expense,
         )
         return cc
 

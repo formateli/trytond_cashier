@@ -392,12 +392,14 @@ class Close(Workflow, ModelSQL, ModelView):
             Sale.process(close.sales)
             cls._sales_to_invoice(close.sales)
 
+            msg = 'Cashier Close ' + close.rec_name
+
             lines = []
             for sale in close.sales:
                 invoice = sale.invoices[0]
                 lines.append(
                     cls._get_receipt_line(
-                        'Cashier Close', #TODO Improve, gettext
+                        msg,
                         invoice.amount_to_pay,
                         invoice.account,
                         invoice.party,
@@ -406,16 +408,30 @@ class Close(Workflow, ModelSQL, ModelView):
             for cct in close.ccterminals:
                 lines.append(
                     cls._get_receipt_line(
-                        'Cashier Close - ' + cct.creditcard.type, #TODO Improve, gettext
+                        msg + ' - ' + cct.creditcard.type,
                         -cct.amount,
                         cct.ccterminal.cash_bank.account,
                         None, None))
-                #TODO bank comision
+                if cct.comission and cct.creditcard.account:
+                    comission = cct.comission_amount
+                    if comission:
+                        lines.append(
+                            cls._get_receipt_line(
+                                msg + ' - ' + cct.creditcard.type + ' comission',
+                                -comission,
+                                cct.creditcard.account,
+                                None, None))
+                        lines.append(
+                            cls._get_receipt_line(
+                                msg + ' - ' + cct.creditcard.type + ' comission',
+                                comission,
+                                cct.ccterminal.cash_bank.account,
+                                None, None)) 
 
             for rcv in close.customers_receivable:
                 lines.append(
                     cls._get_receipt_line(
-                        'Cashier Close', #TODO Improve, gettext
+                        msg,
                         -rcv.amount,
                         rcv.party.account_receivable,
                         rcv.party,
@@ -424,7 +440,7 @@ class Close(Workflow, ModelSQL, ModelView):
             if close.diff != 0:
                 lines.append(
                     cls._get_receipt_line(
-                        'Cashier Close Diff', #TODO Improve, gettext
+                        msg + ' Diff',
                         -close.diff,
                         config.diff_account,
                         None, None))
@@ -433,7 +449,7 @@ class Close(Workflow, ModelSQL, ModelView):
                 date=close.date,
                 cash_bank=close.cashier.cash_bank_cash,
                 type=close.cashier.receipt_type_cash,
-                description='Cashier Close ' + close.number, #TODO Improve, gettext
+                description=msg,
                 party=config.party_sale,
                 cash=close.cash,
                 documents=cls._get_documents(close.documents),
@@ -541,8 +557,18 @@ class CreditCardTerminalMove(ModelSQL, ModelView):
         states=_STATES_DOC,
         digits=(16, Eval('currency_digits', 2)),
         depends=_DEPENDS_DOC + ['currency_digits'])
+    comission = fields.Numeric('Comission',
+        states={'readonly': True},
+        digits=(16, Eval('comission_digits', 2)),
+        depends=['comission_digits'])
+    comission_amount = fields.Function(fields.Numeric('Comission amount',
+            digits=(16, Eval('currency_digits', 2)),
+            depends=['currency_digits']),
+        'get_comission_amount')
     currency_digits = fields.Function(fields.Integer('Currency Digits'),
         'on_change_with_currency_digits')
+    comission_digits = fields.Function(fields.Integer('Comission Digits'),
+        'on_change_with_comission_digits')
     close_state = fields.Function(
         fields.Selection(STATES, 'Close State'),
         'on_change_with_close_state')
@@ -553,10 +579,41 @@ class CreditCardTerminalMove(ModelSQL, ModelView):
             return self.close.currency_digits
         return 2
 
+    @fields.depends('creditcard')
+    def on_change_with_comission_digits(self, name=None):
+        if self.creditcard:
+            return self.creditcard.comission_digits
+        return 4
+
     @fields.depends('close', '_parent_close.state')
     def on_change_with_close_state(self, name=None):
         if self.close:
             return self.close.state
+
+    def get_comission_amount(self, name=None):
+        if self.amount and self.comission:
+            result = self.amount * (self.comission / 100)
+            exp = Decimal(str(10.0 ** -self.currency_digits))
+            return result.quantize(exp)
+
+    @fields.depends('amount', 'comission')
+    def on_change_amount(self):
+        self.comission_amount = None
+        if self.amount and self.comission:
+            self.comission_amount = self.get_comission_amount()
+
+    @fields.depends('amount', 'creditcard')
+    def on_change_creditcard(self):
+        self.comission = None
+        self.comission_amount = None
+        if self.creditcard:
+            self.comission = self.creditcard.comission
+            self.on_change_amount()
+
+    @fields.depends('amount')
+    def on_change_ccterminal(self):
+        self.creditcard = None
+        self.on_change_creditcard()
 
 
 class CustomerReceivable(ModelSQL, ModelView):

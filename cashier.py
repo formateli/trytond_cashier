@@ -107,6 +107,18 @@ class CreditCard(ModelSQL, ModelView):
         depends=['comission_digits'])
     comission_digits = fields.Function(fields.Integer('Digits'),
         'get_comission_digits')
+    account = fields.Many2One('account.account', "Expense Account",
+        states={
+            'required': Bool(Eval('comission')),
+        },
+        domain=[
+            ('type', '!=', None),
+            ('closed', '!=', True),
+            ('company', '=', Eval(
+                '_parent_ccterminal', {}).get(
+                'company', -1))
+            ],
+        depends=['comission'])
     active = fields.Boolean('Active')
 
     @staticmethod
