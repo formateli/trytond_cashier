@@ -596,10 +596,12 @@ class CreditCardTerminalMove(ModelSQL, ModelView):
             exp = Decimal(str(10.0 ** -self.currency_digits))
             return result.quantize(exp)
 
-    @fields.depends('amount', 'comission')
+    @fields.depends('close', '_parent_close.state', 'amount',
+        'comission', 'currency_digits')
     def on_change_amount(self):
         self.comission_amount = None
         if self.amount and self.comission:
+            self.currency_digits = self.on_change_with_currency_digits()
             self.comission_amount = self.get_comission_amount()
 
     @fields.depends('amount', 'creditcard')
