@@ -9,7 +9,7 @@ from trytond.modules.company.tests import create_company, set_company
 from trytond.modules.account.tests import create_chart, get_fiscalyear
 from trytond.modules.cash_bank.tests import (
     create_cash_bank, create_sequence,
-    create_payment_method, create_fiscalyear)
+    create_journal, create_fiscalyear)
 from decimal import Decimal
 
 
@@ -50,8 +50,7 @@ class CashierTestCase(ModuleTestCase):
                 )
             product = self._create_product(product_category)
 
-            payment_method = create_payment_method(
-                company, 'journal_cash', account_cash)
+            journal = create_journal(company, 'journal_cash')
 
             cash_bank_seq = create_sequence(
                 'Cash/Bank Sequence',
@@ -60,12 +59,12 @@ class CashierTestCase(ModuleTestCase):
 
             cash = create_cash_bank(
                 company, 'Main Cash', 'cash',
-                payment_method, cash_bank_seq
+                journal, account_cash, cash_bank_seq
             )
 
             bank = create_cash_bank(
                 company, 'Main Bank', 'bank',
-                payment_method, cash_bank_seq
+                journal, account_revenue, cash_bank_seq
             )
 
             # Configuration
