@@ -6,6 +6,8 @@ this repository contains the full copyright notices and license terms. -->
     <field name="close" colspan="3"/>
     <label name="party"/>
     <field name="party"/>
+    <label name="description"/>
+    <field name="description"/>
     <label name="amount"/>
     <field name="amount"/>
 </form>

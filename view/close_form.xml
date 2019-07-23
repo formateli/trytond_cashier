@@ -21,8 +21,11 @@ this repository contains the full copyright notices and license terms. -->
         <field name="ccterminal_amount"/>
         <label name="document_amount"/>
         <field name="document_amount"/>
+        <newline/>
         <label name="customer_receivable_amount"/>
         <field name="customer_receivable_amount"/>
+        <label name="customer_payable_amount"/>
+        <field name="customer_payable_amount"/>
     </group>
     <notebook colspan="4">
         <page name="sales">
@@ -36,6 +39,9 @@ this repository contains the full copyright notices and license terms. -->
         </page>
         <page name="customers_receivable">
             <field name="customers_receivable" colspan="4"/>
+        </page>
+        <page name="customers_payable">
+            <field name="customers_payable" colspan="4"/>
         </page>
         <page col="6" string="Info" id="info">
             <label name="company"/>

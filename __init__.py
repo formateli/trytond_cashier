@@ -21,6 +21,7 @@ def register():
         close.Document,
         close.CreditCardTerminalMove,
         close.CustomerReceivable,
+        close.CustomerPayable,
         close.CloseLog,
         sale.Sale,
         module='cashier', type_='model')

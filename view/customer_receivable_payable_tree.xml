@@ -4,5 +4,6 @@ this repository contains the full copyright notices and license terms. -->
 <tree>
     <field name="close"/>
     <field name="party"/>
+    <field name="description"/>
     <field name="amount"/>
 </tree>

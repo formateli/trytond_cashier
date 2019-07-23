@@ -108,9 +108,6 @@ class CreditCard(ModelSQL, ModelView):
     comission_digits = fields.Function(fields.Integer('Digits'),
         'get_comission_digits')
     account = fields.Many2One('account.account', "Expense Account",
-        states={
-            'required': Bool(Eval('comission')),
-        },
         domain=[
             ('type', '!=', None),
             ('closed', '!=', True),

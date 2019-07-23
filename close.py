@@ -15,6 +15,7 @@ __all__ = [
         'Document',
         'CreditCardTerminalMove',
         'CustomerReceivable',
+        'CustomerPayable',
         'CloseLog'
     ]
 
@@ -103,6 +104,14 @@ class Close(Workflow, ModelSQL, ModelView):
             digits=(16, Eval('currency_digits', 2)),
             depends=['currency_digits']),
         'get_customer_receivable_amount')
+    customers_payable = fields.One2Many(
+        'cashier.close.customer_payable', 'close', 'Customers Payable',
+        states=_STATES, depends=_DEPENDS)
+    customer_payable_amount = fields.Function(fields.Numeric(
+            'Customers Payable amount',
+            digits=(16, Eval('currency_digits', 2)),
+            depends=['currency_digits']),
+        'get_customer_payable_amount')
     cash = fields.Numeric('Cash', required=True,
         digits=(16, Eval('currency_digits', 2)),
         states=_STATES,
@@ -182,13 +191,16 @@ class Close(Workflow, ModelSQL, ModelView):
         return 2
 
     @fields.depends('cash', 'sales', 'documents',
-        'ccterminals', 'customers_receivable')
+        'ccterminals', 'customers_receivable',
+        'customers_payable')
     def on_change_cash(self):
         self.sale_amount = self.get_sale_amount()
         self.document_amount = self.get_document_amount()
         self.ccterminal_amount = self.get_ccterminal_amount()
         self.customer_receivable_amount = \
             self.get_customer_receivable_amount()
+        self.customer_payable_amount = \
+            self.get_customer_payable_amount()
         self.diff = self.get_diff()
 
     @fields.depends(methods=['on_change_cash'])
@@ -205,6 +217,10 @@ class Close(Workflow, ModelSQL, ModelView):
 
     @fields.depends(methods=['on_change_cash'])
     def on_change_customers_receivable(self):
+        self.on_change_cash()
+
+    @fields.depends(methods=['on_change_cash'])
+    def on_change_customers_payable(self):
         self.on_change_cash()
 
     def _get_amount(self, field, name='amount'):
@@ -232,18 +248,27 @@ class Close(Workflow, ModelSQL, ModelView):
     def get_customer_receivable_amount(self, name=None):
         return self._get_amount(self.customers_receivable)
 
+    @fields.depends('customers_payable')
+    def get_customer_payable_amount(self, name=None):
+        return self._get_amount(self.customers_payable)
+
     def _get_amount_or_zero(self, amount):
         return amount if amount else Decimal('0.0')
 
     @fields.depends('cash', 'document_amount',
             'ccterminal_amount',
-            'customer_receivable_amount')
+            'customer_receivable_amount',
+            'customer_payable_amount')
     def get_diff(self, name=None):
-        res = self._get_amount_or_zero(self.sale_amount) - (
-            self._get_amount_or_zero(self.cash) +
-            self._get_amount_or_zero(self.document_amount) +
-            self._get_amount_or_zero(self.ccterminal_amount) +
-            self._get_amount_or_zero(self.customer_receivable_amount))
+        res = (
+                self._get_amount_or_zero(self.sale_amount) + 
+                self._get_amount_or_zero(self.customer_payable_amount)
+            ) - (
+                self._get_amount_or_zero(self.cash) +
+                self._get_amount_or_zero(self.document_amount) +
+                self._get_amount_or_zero(self.ccterminal_amount) +
+                self._get_amount_or_zero(self.customer_receivable_amount)
+            )
         return res
 
     def get_rec_name(self, name):
@@ -437,6 +462,15 @@ class Close(Workflow, ModelSQL, ModelView):
                         rcv.party,
                         None))
 
+            for rcv in close.customers_payable:
+                lines.append(
+                    cls._get_receipt_line(
+                        msg,
+                        rcv.amount,
+                        rcv.party.account_payable,
+                        rcv.party,
+                        None))
+
             if close.diff != 0:
                 lines.append(
                     cls._get_receipt_line(
@@ -534,7 +568,6 @@ class Document(ModelSQL, ModelView):
 class CreditCardTerminalMove(ModelSQL, ModelView):
     "Cashier Close Credit Card Terminal Move"
     __name__ = "cashier.close.ccterminal.move"
-
     close = fields.Many2One('cashier.close',
         'Close', required=True)
     ccterminal = fields.Many2One('cashier.ccterminal',
@@ -618,12 +651,9 @@ class CreditCardTerminalMove(ModelSQL, ModelView):
         self.on_change_creditcard()
 
 
-class CustomerReceivable(ModelSQL, ModelView):
-    "Cashier Close Customer Receivable"
-    __name__ = "cashier.close.customer_receivable"
-
+class CustomerReceivablePayableMixin(ModelSQL, ModelView):
     close = fields.Many2One('cashier.close',
-        'Close', required=True)
+        'Close', required=True, ondelete='CASCADE')
     party = fields.Many2One('party.party',
         'Party', required=True,
         states=_STATES_DOC, depends=_DEPENDS_DOC)
@@ -633,6 +663,8 @@ class CustomerReceivable(ModelSQL, ModelView):
         depends=_DEPENDS_DOC + ['currency_digits'])
     currency_digits = fields.Function(fields.Integer('Currency Digits'),
         'on_change_with_currency_digits')
+    description = fields.Char('Description',
+        states=_STATES_DOC, depends=_DEPENDS_DOC)
     close_state = fields.Function(
         fields.Selection(STATES, 'Close State'),
         'on_change_with_close_state')
@@ -647,6 +679,16 @@ class CustomerReceivable(ModelSQL, ModelView):
     def on_change_with_close_state(self, name=None):
         if self.close:
             return self.close.state
+
+
+class CustomerReceivable(CustomerReceivablePayableMixin):
+    "Cashier Close Customer Receivable"
+    __name__ = "cashier.close.customer_receivable"
+
+
+class CustomerPayable(CustomerReceivablePayableMixin):
+    "Cashier Close Customer Payable"
+    __name__ = "cashier.close.customer_payable"
 
 
 class CloseLog(LogActionMixin):
