@@ -8,4 +8,5 @@ this repository contains the full copyright notices and license terms. -->
     <field name="entity"/>
     <field name="reference"/>
     <field name="amount"/>
+    <field name="party"/>
 </tree>

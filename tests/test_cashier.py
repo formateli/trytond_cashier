@@ -102,8 +102,10 @@ class CashierTestCase(ModuleTestCase):
             doc_type = self._create_document_type()
 
             close.documents = [
-                    self._create_document(doc_type, date, Decimal('10.0')),
-                    self._create_document(doc_type, date, Decimal('20.0')),
+                    self._create_document(
+                        party, doc_type, date, Decimal('10.0')),
+                    self._create_document(
+                        party, doc_type, date, Decimal('20.0')),
                 ]
             close.save()
             self.assertEqual(close.document_amount, Decimal('30.0'))
@@ -253,10 +255,11 @@ class CashierTestCase(ModuleTestCase):
         )
         return move
 
-    def _create_document(self, doc_type, date, amount):
+    def _create_document(self, party, doc_type, date, amount):
         Document = Pool().get('cashier.close.document')
         doc = Document(
             type=doc_type,
+            party=party,
             date=date,
             amount=amount,
         )

@@ -520,7 +520,12 @@ class Document(ModelSQL, ModelView):
         'cashier.close', 'Close', required=True)
     type = fields.Many2One('cash_bank.document.type', 'Type',
         required=True,
-        states=_STATES_DOC)
+        states=_STATES_DOC, depends=_DEPENDS_DOC)
+    party = fields.Many2One('party.party', 'Party',
+        states={
+            'required': True,
+            'readonly': Eval('close_state') != 'draft',
+        }, depends=_DEPENDS_DOC)
     amount = fields.Numeric('Amount', required=True,
         states=_STATES_DOC,
         digits=(16, Eval('currency_digits', 2)),
