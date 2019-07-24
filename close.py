@@ -361,6 +361,7 @@ class Close(Workflow, ModelSQL, ModelView):
         for doc in documents:
             d = Doc(
                 type=doc.type,
+                party=doc.party,
                 date=doc.date,
                 reference=doc.reference,
                 entity=doc.entity,
