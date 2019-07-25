@@ -25,7 +25,7 @@ class CashierTestCase(ModuleTestCase):
         Close = pool.get('cashier.close')
 
         date = datetime.date.today()
-        party = self._create_party('Sale Party', None)
+        party = self._create_party('Sale Party', None, None)
 
         company = create_company()
         with set_company(company):
@@ -44,6 +44,10 @@ class CashierTestCase(ModuleTestCase):
             account_receivable, = Account.search([
                     ('name', '=', 'Main Receivable'),
                     ])
+            account_payable, = Account.search([
+                    ('name', '=', 'Main Payable'),
+                    ])
+
 
             product_category = self._create_product_category(
                     account_expense, account_revenue
@@ -125,8 +129,10 @@ class CashierTestCase(ModuleTestCase):
 
             # Add Customer Receivable
 
-            party_1 = self._create_party('Customer 1', account_receivable)
-            party_2 = self._create_party('Customer 2', account_receivable)
+            party_1 = self._create_party(
+                'Customer 1', account_receivable, account_payable)
+            party_2 = self._create_party(
+                'Customer 2', account_receivable, account_payable)
 
             close.customers_receivable = [
                     self._create_customer_receivable(
@@ -138,6 +144,20 @@ class CashierTestCase(ModuleTestCase):
             self.assertEqual(
                 close.customer_receivable_amount, Decimal('110.0'))
             self.assertEqual(close.diff, Decimal('90.0'))
+
+            # Add Customer Payable
+
+            party_3 = self._create_party(
+                'Customer 3', account_receivable, account_payable)
+
+            close.customers_payable = [
+                    self._create_customer_receivable(
+                        party_3, Decimal('70.0'), payable=True),
+                ]
+            close.save()
+            self.assertEqual(
+                close.customer_payable_amount, Decimal('70.0'))
+            self.assertEqual(close.diff, Decimal('160.0'))
 
             # Confirm Close
             Close.confirm([close])
@@ -238,8 +258,11 @@ class CashierTestCase(ModuleTestCase):
             Close.confirm([close])
             Close.post([close])
 
-    def _create_customer_receivable(self, party, amount):
-        CR = Pool().get('cashier.close.customer_receivable')
+    def _create_customer_receivable(self, party, amount, payable=False):
+        if payable:
+            CR = Pool().get('cashier.close.customer_payable')
+        else:
+            CR = Pool().get('cashier.close.customer_receivable')
         cr = CR(
             party=party,
             amount=amount,
@@ -333,7 +356,7 @@ class CashierTestCase(ModuleTestCase):
         return sale
 
     @classmethod
-    def _create_party(cls, name, account):
+    def _create_party(cls, name, receivable, payable):
         pool = Pool()
         Party = pool.get('party.party')
         Address = pool.get('party.address')
@@ -342,7 +365,8 @@ class CashierTestCase(ModuleTestCase):
         )
         party = Party(
             name=name,
-            account_receivable=account,
+            account_receivable=receivable,
+            account_payable=payable,
             addresses=[addr,],
         )
         party.save()

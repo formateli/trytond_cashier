@@ -13,6 +13,7 @@ from trytond.modules.log_action import LogActionMixin, write_log
 __all__ = [
         'Close',
         'Document',
+        'Ach',
         'CreditCardTerminalMove',
         'CustomerReceivable',
         'CustomerPayable',
@@ -89,6 +90,12 @@ class Close(Workflow, ModelSQL, ModelView):
             digits=(16, Eval('currency_digits', 2)),
             depends=['currency_digits']),
         'get_document_amount')
+    achs = fields.One2Many('cashier.close.ach', 'close', 'ACH',
+        states=_STATES, depends=_DEPENDS)
+    ach_amount = fields.Function(fields.Numeric('ACH amount',
+            digits=(16, Eval('currency_digits', 2)),
+            depends=['currency_digits']),
+        'get_ach_amount')
     ccterminals = fields.One2Many('cashier.close.ccterminal.move',
         'close', 'Credit Card Terminals',
         states=_STATES, depends=_DEPENDS)
@@ -196,6 +203,7 @@ class Close(Workflow, ModelSQL, ModelView):
     def on_change_cash(self):
         self.sale_amount = self.get_sale_amount()
         self.document_amount = self.get_document_amount()
+        self.ach_amount = self.get_ach_amount()
         self.ccterminal_amount = self.get_ccterminal_amount()
         self.customer_receivable_amount = \
             self.get_customer_receivable_amount()
@@ -209,6 +217,10 @@ class Close(Workflow, ModelSQL, ModelView):
 
     @fields.depends(methods=['on_change_cash'])
     def on_change_documents(self):
+        self.on_change_cash()
+
+    @fields.depends(methods=['on_change_cash'])
+    def on_change_achs(self):
         self.on_change_cash()
 
     @fields.depends(methods=['on_change_cash'])
@@ -240,6 +252,10 @@ class Close(Workflow, ModelSQL, ModelView):
     def get_document_amount(self, name=None):
         return self._get_amount(self.documents)
 
+    @fields.depends('achs')
+    def get_ach_amount(self, name=None):
+        return self._get_amount(self.achs)
+
     @fields.depends('ccterminals')
     def get_ccterminal_amount(self, name=None):
         return self._get_amount(self.ccterminals)
@@ -255,9 +271,8 @@ class Close(Workflow, ModelSQL, ModelView):
     def _get_amount_or_zero(self, amount):
         return amount if amount else Decimal('0.0')
 
-    @fields.depends('cash', 'document_amount',
-            'ccterminal_amount',
-            'customer_receivable_amount',
+    @fields.depends('cash', 'document_amount', 'ach_amount',
+            'ccterminal_amount', 'customer_receivable_amount',
             'customer_payable_amount')
     def get_diff(self, name=None):
         res = (
@@ -266,6 +281,7 @@ class Close(Workflow, ModelSQL, ModelView):
             ) - (
                 self._get_amount_or_zero(self.cash) +
                 self._get_amount_or_zero(self.document_amount) +
+                self._get_amount_or_zero(self.ach_amount) +
                 self._get_amount_or_zero(self.ccterminal_amount) +
                 self._get_amount_or_zero(self.customer_receivable_amount)
             )
@@ -514,50 +530,31 @@ class Close(Workflow, ModelSQL, ModelView):
         write_log('Cancelled', closes)
 
 
-class Document(ModelSQL, ModelView):
-    "Cahsier Close Document"
-    __name__ = "cashier.close.document"
-    close = fields.Many2One(
-        'cashier.close', 'Close', required=True)
-    type = fields.Many2One('cash_bank.document.type', 'Type',
-        required=True,
-        states=_STATES_DOC, depends=_DEPENDS_DOC)
-    party = fields.Many2One('party.party', 'Party',
-        states={
-            'required': True,
-            'readonly': Eval('close_state') != 'draft',
-        }, depends=_DEPENDS_DOC)
+class CloseDetailMixin(ModelSQL, ModelView):
+    close = fields.Many2One('cashier.close',
+        'Close', required=True, ondelete='CASCADE')
     amount = fields.Numeric('Amount', required=True,
         states=_STATES_DOC,
         digits=(16, Eval('currency_digits', 2)),
         depends=_DEPENDS_DOC + ['currency_digits'])
-    date = fields.Date('Date', required=True,
-        states=_STATES_DOC, depends=_DEPENDS_DOC)
-    reference = fields.Char('Reference', size=None,
-        states=_STATES_DOC, depends=_DEPENDS_DOC)
-    entity = fields.Char('Entity', size=None,
-        states=_STATES_DOC, depends=_DEPENDS_DOC)
     currency_digits = fields.Function(fields.Integer('Currency Digits'),
         'on_change_with_currency_digits')
-    cash_bank_document = fields.Many2One('cash_bank.document',
-        'Cash/Bank document', ondelete='RESTRICT',
-        states=_STATES_DOC, depends=_DEPENDS_DOC)
     close_state = fields.Function(
         fields.Selection(STATES, 'Close State'),
         'on_change_with_close_state')
 
-    @classmethod
-    def __setup__(cls):
-        super(Document, cls).__setup__()
-        t = cls.__table__()
-        cls._sql_constraints += [
-            ('check_cashier_doc_amount', Check(t, t.amount > 0),
-                'Amount must be greater than zero.'),
-            ]
-
     @staticmethod
     def default_amount():
         return Decimal('0.0')
+
+    @staticmethod
+    def default_currency_digits():
+        Company = Pool().get('company.company')
+        company = Transaction().context.get('company')
+        if company:
+            company = Company(company)
+            return company.currency.digits
+        return 2
 
     @fields.depends('close', '_parent_close.currency_digits')
     def on_change_with_currency_digits(self, name=None):
@@ -571,11 +568,40 @@ class Document(ModelSQL, ModelView):
             return self.close.state
 
 
-class CreditCardTerminalMove(ModelSQL, ModelView):
+class Document(CloseDetailMixin):
+    "Cahsier Close Document"
+    __name__ = "cashier.close.document"
+    type = fields.Many2One('cash_bank.document.type', 'Type',
+        required=True,
+        states=_STATES_DOC, depends=_DEPENDS_DOC)
+    party = fields.Many2One('party.party', 'Party',
+        states={
+            'required': True,
+            'readonly': Eval('close_state') != 'draft',
+        }, depends=_DEPENDS_DOC)
+    date = fields.Date('Date', required=True,
+        states=_STATES_DOC, depends=_DEPENDS_DOC)
+    reference = fields.Char('Reference', size=None,
+        states=_STATES_DOC, depends=_DEPENDS_DOC)
+    entity = fields.Char('Entity', size=None,
+        states=_STATES_DOC, depends=_DEPENDS_DOC)
+    cash_bank_document = fields.Many2One('cash_bank.document',
+        'Cash/Bank document', ondelete='RESTRICT',
+        states=_STATES_DOC, depends=_DEPENDS_DOC)
+
+    @classmethod
+    def __setup__(cls):
+        super(Document, cls).__setup__()
+        t = cls.__table__()
+        cls._sql_constraints += [
+            ('check_cashier_doc_amount', Check(t, t.amount > 0),
+                'Amount must be greater than zero.'),
+            ]
+
+
+class CreditCardTerminalMove(CloseDetailMixin):
     "Cashier Close Credit Card Terminal Move"
     __name__ = "cashier.close.ccterminal.move"
-    close = fields.Many2One('cashier.close',
-        'Close', required=True)
     ccterminal = fields.Many2One('cashier.ccterminal',
         'Credit Card Terminal', required=True,
         domain=[
@@ -592,10 +618,6 @@ class CreditCardTerminalMove(ModelSQL, ModelView):
                 [('ccterminal', '=', -1)]
             ),
         ], states=_STATES_DOC, depends=_DEPENDS_DOC + ['ccterminal'])
-    amount = fields.Numeric('Amount', required=True,
-        states=_STATES_DOC,
-        digits=(16, Eval('currency_digits', 2)),
-        depends=_DEPENDS_DOC + ['currency_digits'])
     comission = fields.Numeric('Comission',
         states={'readonly': True},
         digits=(16, Eval('comission_digits', 2)),
@@ -604,30 +626,14 @@ class CreditCardTerminalMove(ModelSQL, ModelView):
             digits=(16, Eval('currency_digits', 2)),
             depends=['currency_digits']),
         'get_comission_amount')
-    currency_digits = fields.Function(fields.Integer('Currency Digits'),
-        'on_change_with_currency_digits')
     comission_digits = fields.Function(fields.Integer('Comission Digits'),
         'on_change_with_comission_digits')
-    close_state = fields.Function(
-        fields.Selection(STATES, 'Close State'),
-        'on_change_with_close_state')
-
-    @fields.depends('close', '_parent_close.currency_digits')
-    def on_change_with_currency_digits(self, name=None):
-        if self.close:
-            return self.close.currency_digits
-        return 2
 
     @fields.depends('creditcard')
     def on_change_with_comission_digits(self, name=None):
         if self.creditcard:
             return self.creditcard.comission_digits
         return 4
-
-    @fields.depends('close', '_parent_close.state')
-    def on_change_with_close_state(self, name=None):
-        if self.close:
-            return self.close.state
 
     def get_comission_amount(self, name=None):
         if self.amount and self.comission:
@@ -657,34 +663,24 @@ class CreditCardTerminalMove(ModelSQL, ModelView):
         self.on_change_creditcard()
 
 
-class CustomerReceivablePayableMixin(ModelSQL, ModelView):
-    close = fields.Many2One('cashier.close',
-        'Close', required=True, ondelete='CASCADE')
+class Ach(CloseDetailMixin):
+    "Cashier Close ACH"
+    __name__ = "cashier.close.ach"
     party = fields.Many2One('party.party',
         'Party', required=True,
         states=_STATES_DOC, depends=_DEPENDS_DOC)
-    amount = fields.Numeric('Amount', required=True,
-        states=_STATES_DOC,
-        digits=(16, Eval('currency_digits', 2)),
-        depends=_DEPENDS_DOC + ['currency_digits'])
-    currency_digits = fields.Function(fields.Integer('Currency Digits'),
-        'on_change_with_currency_digits')
+    date = fields.Date('Date', required=True,
+        states=_STATES_DOC, depends=_DEPENDS_DOC)
     description = fields.Char('Description',
         states=_STATES_DOC, depends=_DEPENDS_DOC)
-    close_state = fields.Function(
-        fields.Selection(STATES, 'Close State'),
-        'on_change_with_close_state')
 
-    @fields.depends('close', '_parent_close.currency_digits')
-    def on_change_with_currency_digits(self, name=None):
-        if self.close:
-            return self.close.currency_digits
-        return 2
 
-    @fields.depends('close', '_parent_close.state')
-    def on_change_with_close_state(self, name=None):
-        if self.close:
-            return self.close.state
+class CustomerReceivablePayableMixin(CloseDetailMixin):
+    party = fields.Many2One('party.party',
+        'Party', required=True,
+        states=_STATES_DOC, depends=_DEPENDS_DOC)
+    description = fields.Char('Description',
+        states=_STATES_DOC, depends=_DEPENDS_DOC)
 
 
 class CustomerReceivable(CustomerReceivablePayableMixin):

@@ -19,6 +19,7 @@ def register():
         cashier.CreditCard,
         close.Close,
         close.Document,
+        close.Ach,
         close.CreditCardTerminalMove,
         close.CustomerReceivable,
         close.CustomerPayable,

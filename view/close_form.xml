@@ -21,6 +21,8 @@ this repository contains the full copyright notices and license terms. -->
         <field name="ccterminal_amount"/>
         <label name="document_amount"/>
         <field name="document_amount"/>
+        <label name="ach_amount"/>
+        <field name="ach_amount"/>
         <newline/>
         <label name="customer_receivable_amount"/>
         <field name="customer_receivable_amount"/>
@@ -36,6 +38,9 @@ this repository contains the full copyright notices and license terms. -->
         </page>
         <page name="documents">
             <field name="documents" colspan="4"/>
+        </page>
+        <page name="achs">
+            <field name="achs" colspan="4"/>
         </page>
         <page name="customers_receivable">
             <field name="customers_receivable" colspan="4"/>
