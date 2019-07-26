@@ -21,6 +21,7 @@ class CashierTestCase(ModuleTestCase):
     def test_cashier(self):
         pool = Pool()
         Account = pool.get('account.account')
+        ConfigCashBank = Pool().get('cash_bank.configuration')
         Config = Pool().get('cashier.configuration')
         Close = pool.get('cashier.close')
 
@@ -80,6 +81,11 @@ class CashierTestCase(ModuleTestCase):
                     diff_account=account_expense,
                 )
             config.save()
+
+            config_cash_bank = ConfigCashBank(
+                    account_transfer=account_cash,
+                )
+            config_cash_bank.save()
 
             # Cashier
 
@@ -158,6 +164,19 @@ class CashierTestCase(ModuleTestCase):
             self.assertEqual(
                 close.customer_payable_amount, Decimal('70.0'))
             self.assertEqual(close.diff, Decimal('160.0'))
+
+            # Add ACH
+
+            party_4 = self._create_party(
+                'Customer 4', account_receivable, account_payable)
+
+            close.achs = [
+                    self._create_ach(party_4, date, Decimal('80.0'), bank),
+                ]
+            close.save()
+            self.assertEqual(
+                close.ach_amount, Decimal('80.0'))
+            self.assertEqual(close.diff, Decimal('80.0'))
 
             # Confirm Close
             Close.confirm([close])
@@ -257,6 +276,17 @@ class CashierTestCase(ModuleTestCase):
 
             Close.confirm([close])
             Close.post([close])
+
+    def _create_ach(self, party, date, amount, bank):
+        Ach = Pool().get('cashier.close.ach')
+        ach = Ach(
+            party=party,
+            date=date,
+            amount=amount,
+            bank=bank,
+            receipt_type=bank.receipt_types[0]
+        )
+        return ach
 
     def _create_customer_receivable(self, party, amount, payable=False):
         if payable:

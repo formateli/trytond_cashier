@@ -197,7 +197,7 @@ class Close(Workflow, ModelSQL, ModelView):
             return self.currency.digits
         return 2
 
-    @fields.depends('cash', 'sales', 'documents',
+    @fields.depends('cash', 'sales', 'documents', 'achs',
         'ccterminals', 'customers_receivable',
         'customers_payable')
     def on_change_cash(self):
@@ -423,11 +423,14 @@ class Close(Workflow, ModelSQL, ModelView):
     def post(cls, closes):
         pool = Pool()
         Config = pool.get('cashier.configuration')
+        ConfigCashBank = pool.get('cash_bank.configuration')
         Sale = pool.get('sale.sale')
         Receipt = pool.get('cash_bank.receipt')
 
         config = Config(1)
-        receipts=[]
+        config_cash_bank = ConfigCashBank(1)
+        receipts = []
+        ach_receipts = []
 
         for close in closes:
             Sale.confirm(close.sales)
@@ -473,7 +476,7 @@ class Close(Workflow, ModelSQL, ModelView):
             for rcv in close.customers_receivable:
                 lines.append(
                     cls._get_receipt_line(
-                        msg,
+                        msg + ' ' + rcv.description if rcv.description else '',
                         -rcv.amount,
                         rcv.party.account_receivable,
                         rcv.party,
@@ -482,11 +485,41 @@ class Close(Workflow, ModelSQL, ModelView):
             for rcv in close.customers_payable:
                 lines.append(
                     cls._get_receipt_line(
-                        msg,
+                        msg + ' ' + rcv.description if rcv.description else '',
                         rcv.amount,
                         rcv.party.account_payable,
                         rcv.party,
                         None))
+
+            for ach in close.achs:
+                lines.append(
+                    cls._get_receipt_line(
+                        msg + ' ' + ach.full_description(),
+                        -ach.amount,
+                        config_cash_bank.account_transfer,
+                        None, None))
+
+                ach_receipt = Receipt(
+                    date=ach.date,
+                    cash_bank=ach.bank,
+                    type=ach.receipt_type,
+                    reference=ach.reference,
+                    description=msg + ' ' + ach.full_description(),
+                    party=ach.party,
+                    cash=ach.amount,
+                    lines=[
+                        cls._get_receipt_line(
+                            msg + ' ' + ach.full_description(),
+                            ach.amount,
+                            config_cash_bank.account_transfer,
+                            None,
+                            None)
+                    ]
+                )
+                ach_receipt.save()
+                ach.bank_receipt = ach_receipt
+                ach.save()
+                ach_receipts.append(ach_receipt)
 
             if close.diff != 0:
                 lines.append(
@@ -515,6 +548,10 @@ class Close(Workflow, ModelSQL, ModelView):
 
         Receipt.confirm(receipts)
         Receipt.post(receipts)
+        if ach_receipts:
+            Receipt.confirm(ach_receipts)
+            Receipt.post(ach_receipts)
+            write_log('ACH Bank receipts Posted', closes)
         write_log('Posted', closes)
 
     @classmethod
@@ -671,8 +708,40 @@ class Ach(CloseDetailMixin):
         states=_STATES_DOC, depends=_DEPENDS_DOC)
     date = fields.Date('Date', required=True,
         states=_STATES_DOC, depends=_DEPENDS_DOC)
+    reference = fields.Char('Reference', size=None,
+        states=_STATES_DOC, depends=_DEPENDS_DOC)
     description = fields.Char('Description',
         states=_STATES_DOC, depends=_DEPENDS_DOC)
+    bank = fields.Many2One('cash_bank.cash_bank',
+            'Bank', required=True,
+            domain=[
+                ('company', '=', Eval(
+                    '_parent_close', {}).get(
+                    'company', -1)),
+                ('type', '=', 'bank')
+            ], states=_STATES_DOC, depends=_DEPENDS_DOC)
+    receipt_type = fields.Many2One('cash_bank.receipt_type',
+        'Receipt Type', required=True,
+        domain=[
+            If(
+                Bool(Eval('bank')),
+                [('cash_bank', '=', Eval('bank'))],
+                [('cash_bank', '=', -1)]
+            ),
+            ('type', '=', 'in')
+        ], states=_STATES_DOC, depends=_DEPENDS_DOC + ['bank'])
+    bank_receipt = fields.Many2One('cash_bank.receipt',
+        'Receipt', readonly=True)
+
+    @fields.depends('receipt_type')
+    def on_change_bank(self):
+        self.receipt_type = None
+
+    def full_description(self):
+        val = 'ACH ' + self.bank.rec_name + ' - ' + self.party.rec_name
+        val += ': Ref: ' + self.reference if self.reference else ''
+        val += ' - ' + self.description if self.description else ''
+        return val
 
 
 class CustomerReceivablePayableMixin(CloseDetailMixin):

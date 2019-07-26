@@ -8,8 +8,17 @@ this repository contains the full copyright notices and license terms. -->
     <field name="date"/>
     <label name="party"/>
     <field name="party"/>
+    <label name="bank"/>
+    <field name="bank"/>
+    <label name="receipt_type"/>
+    <field name="receipt_type"/>
+    <label name="reference"/>
+    <field name="reference"/>
+    <newline/>
     <label name="description"/>
-    <field name="description"/>
+    <field name="description" colspan="3"/>
     <label name="amount"/>
     <field name="amount"/>
+    <label name="bank_receipt"/>
+    <field name="bank_receipt"/>
 </form>

@@ -48,6 +48,8 @@ class Cashier(ModelSQL, ModelView):
             ),
             ('type', '=', 'in')
         ], depends=['cash_bank_cash'])
+    #TODO sale action
+    #TODO diff action
     active = fields.Boolean('Active')
 
     @staticmethod
@@ -57,6 +59,10 @@ class Cashier(ModelSQL, ModelView):
     @staticmethod
     def default_active():
         return True
+
+    @fields.depends('receipt_type_cash')
+    def on_change_cash_bank_cash(self):
+        self.receipt_type_cash = None
 
 
 class CreditCardTerminal(ModelSQL, ModelView):

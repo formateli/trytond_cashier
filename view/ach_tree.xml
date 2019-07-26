@@ -6,5 +6,7 @@ this repository contains the full copyright notices and license terms. -->
     <field name="date"/>
     <field name="party"/>
     <field name="description"/>
+    <field name="bank"/>
+    <field name="receipt_type"/>
     <field name="amount"/>
 </tree>
