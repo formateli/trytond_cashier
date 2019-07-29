@@ -6,8 +6,8 @@ this repository contains the full copyright notices and license terms. -->
     <field name="ccterminal" colspan="3"/>
     <label name="type"/>
     <field name="type"/>
-    <label name="comission"/>
-    <field name="comission"/>
+    <label name="commission"/>
+    <field name="commission"/>
     <label name="account"/>
     <field name="account"/>
     <label name="active"/>

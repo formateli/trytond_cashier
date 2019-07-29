@@ -457,19 +457,19 @@ class Close(Workflow, ModelSQL, ModelView):
                         -cct.amount,
                         cct.ccterminal.cash_bank.account,
                         None, None))
-                if cct.comission and cct.creditcard.account:
-                    comission = cct.comission_amount
-                    if comission:
+                if cct.commission and cct.creditcard.account:
+                    commission = cct.commission_amount
+                    if commission:
                         lines.append(
                             cls._get_receipt_line(
-                                msg + ' - ' + cct.creditcard.type + ' comission',
-                                -comission,
+                                msg + ' - ' + cct.creditcard.type + ' commission',
+                                -commission,
                                 cct.creditcard.account,
                                 None, None))
                         lines.append(
                             cls._get_receipt_line(
-                                msg + ' - ' + cct.creditcard.type + ' comission',
-                                comission,
+                                msg + ' - ' + cct.creditcard.type + ' commission',
+                                commission,
                                 cct.ccterminal.cash_bank.account,
                                 None, None)) 
 
@@ -655,43 +655,43 @@ class CreditCardTerminalMove(CloseDetailMixin):
                 [('ccterminal', '=', -1)]
             ),
         ], states=_STATES_DOC, depends=_DEPENDS_DOC + ['ccterminal'])
-    comission = fields.Numeric('Comission',
+    commission = fields.Numeric('Commission',
         states={'readonly': True},
-        digits=(16, Eval('comission_digits', 2)),
-        depends=['comission_digits'])
-    comission_amount = fields.Function(fields.Numeric('Comission amount',
+        digits=(16, Eval('commission_digits', 2)),
+        depends=['commission_digits'])
+    commission_amount = fields.Function(fields.Numeric('Commission amount',
             digits=(16, Eval('currency_digits', 2)),
             depends=['currency_digits']),
-        'get_comission_amount')
-    comission_digits = fields.Function(fields.Integer('Comission Digits'),
-        'on_change_with_comission_digits')
+        'get_commission_amount')
+    commission_digits = fields.Function(fields.Integer('commission Digits'),
+        'on_change_with_commission_digits')
 
     @fields.depends('creditcard')
-    def on_change_with_comission_digits(self, name=None):
+    def on_change_with_commission_digits(self, name=None):
         if self.creditcard:
-            return self.creditcard.comission_digits
+            return self.creditcard.commission_digits
         return 4
 
-    def get_comission_amount(self, name=None):
-        if self.amount and self.comission:
-            result = self.amount * (self.comission / 100)
+    def get_commission_amount(self, name=None):
+        if self.amount and self.commission:
+            result = self.amount * (self.commission / 100)
             exp = Decimal(str(10.0 ** -self.currency_digits))
             return result.quantize(exp)
 
     @fields.depends('close', '_parent_close.state', 'amount',
-        'comission', 'currency_digits')
+        'commission', 'currency_digits')
     def on_change_amount(self):
-        self.comission_amount = None
-        if self.amount and self.comission:
+        self.commission_amount = None
+        if self.amount and self.commission:
             self.currency_digits = self.on_change_with_currency_digits()
-            self.comission_amount = self.get_comission_amount()
+            self.commission_amount = self.get_commission_amount()
 
     @fields.depends('amount', 'creditcard')
     def on_change_creditcard(self):
-        self.comission = None
-        self.comission_amount = None
+        self.commission = None
+        self.commission_amount = None
         if self.creditcard:
-            self.comission = self.creditcard.comission
+            self.commission = self.creditcard.commission
             self.on_change_amount()
 
     @fields.depends('amount')

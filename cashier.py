@@ -108,11 +108,11 @@ class CreditCard(ModelSQL, ModelView):
             ('master', 'Master Card'),
             ('amex', 'American Express'),
         ], 'Type', required=True)
-    comission = fields.Numeric('Comission',
-        digits=(16, Eval('comission_digits', 4)),
-        depends=['comission_digits'])
-    comission_digits = fields.Function(fields.Integer('Digits'),
-        'get_comission_digits')
+    commission = fields.Numeric('Commission',
+        digits=(16, Eval('commission_digits', 4)),
+        depends=['commission_digits'])
+    commission_digits = fields.Function(fields.Integer('Digits'),
+        'get_commission_digits')
     account = fields.Many2One('account.account', "Expense Account",
         domain=[
             ('type', '!=', None),
@@ -121,7 +121,7 @@ class CreditCard(ModelSQL, ModelView):
                 '_parent_ccterminal', {}).get(
                 'company', -1))
             ],
-        depends=['comission'])
+        depends=['commission'])
     active = fields.Boolean('Active')
 
     @staticmethod
@@ -129,11 +129,11 @@ class CreditCard(ModelSQL, ModelView):
         return True
 
     @staticmethod
-    def default_comission_digits():
+    def default_commission_digits():
         return 4
 
-    def get_comission_digits(self, name=None):
-        return self.default_comission_digits()
+    def get_commission_digits(self, name=None):
+        return self.default_commission_digits()
 
     def get_rec_name(self, name):
         if self.type:

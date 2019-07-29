@@ -4,7 +4,7 @@ this repository contains the full copyright notices and license terms. -->
 <tree>
     <field name="ccterminal"/>
     <field name="type"/>
-    <field name="comission"/>
+    <field name="commission"/>
     <field name="account"/>
     <field name="active"/>
 </tree>
