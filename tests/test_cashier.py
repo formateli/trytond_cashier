@@ -6,7 +6,7 @@ from trytond.pool import Pool
 import datetime
 from trytond.tests.test_tryton import ModuleTestCase, with_transaction
 from trytond.modules.company.tests import create_company, set_company
-from trytond.modules.account.tests import create_chart, get_fiscalyear
+from trytond.modules.account.tests import create_chart
 from trytond.modules.cash_bank.tests import (
     create_cash_bank, create_sequence,
     create_journal, create_fiscalyear)

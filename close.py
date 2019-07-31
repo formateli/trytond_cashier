@@ -318,6 +318,7 @@ class Close(Workflow, ModelSQL, ModelView):
     def delete(cls, closes):
         for close in closes:
             if close.state not in ['draft']:
+                write_log('Delete attempt', [close])
                 raise UserError(
                     gettext('cashier.close_delete_draft',
                         close=close.rec_name
