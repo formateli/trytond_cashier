@@ -19,17 +19,16 @@ class Configuration(
         ModelSingleton, ModelSQL, ModelView, CompanyMultiValueMixin):
     'Cashier Configuration'
     __name__ = 'cashier.configuration'
-
     party_sale = fields.MultiValue(fields.Many2One(
-        'party.party', "Party Sale", required=True))
+        'party.party', "Party Sale"))
     close_seq = fields.MultiValue(fields.Many2One(
-        'ir.sequence', "Close Sequence", required=True,
+        'ir.sequence', "Close Sequence",
         domain=[
             ('company', 'in', [Eval('context', {}).get('company', -1), None]),
             ('code', '=', 'cashier.close'),
         ]))
     diff_account = fields.MultiValue(fields.Many2One('account.account',
-        'Diff Account', required=True,
+        'Diff Account',
         domain=[
             ('company', '=', Eval('context', {}).get('company', -1)),
         ]))

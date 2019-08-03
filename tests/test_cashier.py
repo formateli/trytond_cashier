@@ -367,7 +367,6 @@ class CashierTestCase(ModuleTestCase):
         pool = Pool()
         Sale = pool.get('sale.sale')
         Line = pool.get('sale.line')
-        Party = pool.get('party.party')
 
         line = Line()
         line.product = product

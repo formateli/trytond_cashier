@@ -371,6 +371,14 @@ class Close(Workflow, ModelSQL, ModelView):
         return line
 
     @classmethod
+    def _get_extra_lines(cls, close):
+        ''' 
+        To extend with other modules.
+        It must return a list of cash_bank.receipt.line
+        '''
+        return []
+
+    @classmethod
     def _get_documents(cls, documents):
         pool = Pool()
         Doc = pool.get('cash_bank.document')
@@ -530,6 +538,8 @@ class Close(Workflow, ModelSQL, ModelView):
                         config.diff_account,
                         None, None))
 
+            lines += cls._get_extra_lines(close)
+
             cash_receipt = Receipt(
                 date=close.date,
                 cash_bank=close.cashier.cash_bank_cash,
@@ -658,7 +668,7 @@ class CreditCardTerminalMove(CloseDetailMixin):
         ], states=_STATES_DOC, depends=_DEPENDS_DOC + ['ccterminal'])
     commission = fields.Numeric('Commission',
         states={'readonly': True},
-        digits=(16, Eval('commission_digits', 2)),
+        digits=(16, Eval('commission_digits', 4)),
         depends=['commission_digits'])
     commission_amount = fields.Function(fields.Numeric('Commission amount',
             digits=(16, Eval('currency_digits', 2)),
