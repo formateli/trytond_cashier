@@ -107,6 +107,7 @@ class CreditCard(ModelSQL, ModelView):
             ('visa', 'Visa'),
             ('master', 'Master Card'),
             ('amex', 'American Express'),
+            ('debit', 'Debit'),
         ], 'Type', required=True)
     commission = fields.Numeric('Commission',
         digits=(16, Eval('commission_digits', 4)),

@@ -52,8 +52,8 @@ class Close(Workflow, ModelSQL, ModelView):
                 Eval('context', {}).get('company', -1)),
             ],
         select=True)
-    cashier = fields.Many2One(
-        'cashier.cashier', 'Cashier', required=True)
+    cashier = fields.Many2One('cashier.cashier', 'Cashier', required=True,
+        states=_STATES, depends=_DEPENDS)
     currency = fields.Many2One('currency.currency', 'Currency', required=True,
         states={
             'readonly': True,
