@@ -48,6 +48,9 @@ this repository contains the full copyright notices and license terms. -->
         <page name="customers_payable">
             <field name="customers_payable" colspan="4"/>
         </page>
+        <page name="note">
+            <field name="note" colspan="4"/>
+        </page>
         <page col="6" string="Info" id="info">
             <label name="company"/>
             <field name="company"/>

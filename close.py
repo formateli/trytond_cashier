@@ -127,6 +127,7 @@ class Close(Workflow, ModelSQL, ModelView):
             digits=(16, Eval('currency_digits', 2)),
             depends=['currency_digits']),
         'get_diff')
+    note = fields.Text('Notes', size=None)
     cash_bank_receipt = fields.Many2One('cash_bank.receipt',
         'Receipt', readonly=True)
     logs = fields.One2Many('cashier.close.log_action', 'resource', 'Logs')
