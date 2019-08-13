@@ -21,8 +21,8 @@ class CashierTestCase(ModuleTestCase):
     def test_cashier(self):
         pool = Pool()
         Account = pool.get('account.account')
-        ConfigCashBank = Pool().get('cash_bank.configuration')
-        Config = Pool().get('cashier.configuration')
+        ConfigCashBank = pool.get('cash_bank.configuration')
+        Config = pool.get('cashier.configuration')
         Close = pool.get('cashier.close')
 
         date = datetime.date.today()

@@ -135,7 +135,7 @@ class Close(Workflow, ModelSQL, ModelView):
     @classmethod
     def __setup__(cls):
         super(Close, cls).__setup__()
-        cls._order[0] = ('id', 'DESC')
+        cls._order[0] = ('number', 'DESC')
 
         cls._transitions |= set(
             (
