@@ -130,7 +130,8 @@ class Close(Workflow, ModelSQL, ModelView):
     note = fields.Text('Notes', size=None)
     cash_bank_receipt = fields.Many2One('cash_bank.receipt',
         'Receipt', readonly=True)
-    logs = fields.One2Many('cashier.close.log_action', 'resource', 'Logs')
+    logs = fields.One2Many('cashier.close.log_action', 'resource', 'Logs',
+        readonly=True)
 
     @classmethod
     def __setup__(cls):
