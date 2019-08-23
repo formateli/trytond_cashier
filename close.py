@@ -583,6 +583,8 @@ class Close(Workflow, ModelSQL, ModelView):
 class CloseDetailMixin(ModelSQL, ModelView):
     close = fields.Many2One('cashier.close',
         'Close', required=True, ondelete='CASCADE')
+    company = fields.Function(fields.Many2One('company.company', 'Company'),
+        'on_change_with_company')
     amount = fields.Numeric('Amount', required=True,
         states=_STATES_DOC,
         digits=(16, Eval('currency_digits', 2)),
@@ -616,6 +618,11 @@ class CloseDetailMixin(ModelSQL, ModelView):
     def on_change_with_close_state(self, name=None):
         if self.close:
             return self.close.state
+
+    @fields.depends('close', '_parent_close.company')
+    def on_change_with_company(self, name=None):
+        if self.close:
+            return self.close.company.id
 
 
 class Document(CloseDetailMixin):
