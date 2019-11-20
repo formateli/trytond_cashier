@@ -426,7 +426,7 @@ class Close(Workflow, ModelSQL, ModelView):
             sales += close.sales
         Sale.quote(sales)
         cls.set_number(closes)
-        write_log('Confirmed', closes)
+        write_log('Confirmed', closes, key='confirm')
 
     @classmethod
     @ModelView.button
@@ -565,7 +565,7 @@ class Close(Workflow, ModelSQL, ModelView):
             Receipt.confirm(ach_receipts)
             Receipt.post(ach_receipts)
             write_log('ACH Bank receipts Posted', closes)
-        write_log('Posted', closes)
+        write_log('Posted', closes, key='post')
 
     @classmethod
     @ModelView.button
@@ -577,7 +577,7 @@ class Close(Workflow, ModelSQL, ModelView):
         for close in closes:
             sales += close.sales
         Sale.cancel(sales)
-        write_log('Cancelled', closes)
+        write_log('Cancelled', closes, key='cancel')
 
 
 class CloseDetailMixin(ModelSQL, ModelView):

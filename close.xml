@@ -98,7 +98,7 @@ this repository contains the full copyright notices and license terms. -->
             <field name="name">close_tree</field>
         </record>
         <record model="ir.action.act_window" id="act_close_form">
-            <field name="name">Close</field>
+            <field name="name">Closing</field>
             <field name="res_model">cashier.close</field>
             <field name="search_value"></field>
         </record>
