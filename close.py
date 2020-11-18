@@ -42,7 +42,7 @@ STATES = [
 
 class Close(Workflow, ModelSQL, ModelView):
     "Cashier Close"
-    __name__ = "cashier.close" 
+    __name__ = "cashier.close"
     company = fields.Many2One('company.company', 'Company', required=True,
         states={
             'readonly': True,
@@ -278,7 +278,7 @@ class Close(Workflow, ModelSQL, ModelView):
             'customer_payable_amount')
     def get_diff(self, name=None):
         res = (
-                self._get_amount_or_zero(self.sale_amount) + 
+                self._get_amount_or_zero(self.sale_amount) +
                 self._get_amount_or_zero(self.customer_payable_amount)
             ) - (
                 self._get_amount_or_zero(self.cash) +
@@ -360,10 +360,12 @@ class Close(Workflow, ModelSQL, ModelView):
             Invoice.post(invoices)
 
     @classmethod
-    def _get_receipt_line(cls, description, amount, account, party, invoice):
+    def _get_receipt_line(cls, type_, description,
+            amount, account, party, invoice):
         pool = Pool()
         Line = pool.get('cash_bank.receipt.line')
         line = Line(
+            type=type_,
             party=party,
             invoice=invoice,
             account=account,
@@ -374,7 +376,7 @@ class Close(Workflow, ModelSQL, ModelView):
 
     @classmethod
     def _get_extra_lines(cls, close):
-        ''' 
+        '''
         To extend with other modules.
         It must return a list of cash_bank.receipt.line
         '''
@@ -426,7 +428,7 @@ class Close(Workflow, ModelSQL, ModelView):
             sales += close.sales
         Sale.quote(sales)
         cls.set_number(closes)
-        write_log('Confirmed', closes, key='confirm')
+        write_log('Confirmed', closes, 'confirm')
 
     @classmethod
     @ModelView.button
@@ -455,6 +457,7 @@ class Close(Workflow, ModelSQL, ModelView):
                 invoice = sale.invoices[0]
                 lines.append(
                     cls._get_receipt_line(
+                        'invoice_customer',
                         msg,
                         invoice.amount_to_pay,
                         invoice.account,
@@ -464,6 +467,7 @@ class Close(Workflow, ModelSQL, ModelView):
             for cct in close.ccterminals:
                 lines.append(
                     cls._get_receipt_line(
+                        'move_line',
                         msg + ' - ' + cct.creditcard.type,
                         -cct.amount,
                         cct.ccterminal.cash_bank.account,
@@ -473,20 +477,23 @@ class Close(Workflow, ModelSQL, ModelView):
                     if commission:
                         lines.append(
                             cls._get_receipt_line(
+                                'move_line',
                                 msg + ' - ' + cct.creditcard.type + ' commission',
                                 -commission,
                                 cct.creditcard.account,
                                 None, None))
                         lines.append(
                             cls._get_receipt_line(
+                                'move_line',
                                 msg + ' - ' + cct.creditcard.type + ' commission',
                                 commission,
                                 cct.ccterminal.cash_bank.account,
-                                None, None)) 
+                                None, None))
 
             for rcv in close.customers_receivable:
                 lines.append(
                     cls._get_receipt_line(
+                        'move_line',
                         msg + ' ' + rcv.description if rcv.description else '',
                         -rcv.amount,
                         rcv.party.account_receivable,
@@ -496,6 +503,7 @@ class Close(Workflow, ModelSQL, ModelView):
             for rcv in close.customers_payable:
                 lines.append(
                     cls._get_receipt_line(
+                        'move_line',
                         msg + ' ' + rcv.description if rcv.description else '',
                         rcv.amount,
                         rcv.party.account_payable,
@@ -505,6 +513,7 @@ class Close(Workflow, ModelSQL, ModelView):
             for ach in close.achs:
                 lines.append(
                     cls._get_receipt_line(
+                        'move_line',
                         msg + ' ' + ach.full_description(),
                         -ach.amount,
                         config_cash_bank.account_transfer,
@@ -520,6 +529,7 @@ class Close(Workflow, ModelSQL, ModelView):
                     cash=ach.amount,
                     lines=[
                         cls._get_receipt_line(
+                            'move_line',
                             msg + ' ' + ach.full_description(),
                             ach.amount,
                             config_cash_bank.account_transfer,
@@ -535,6 +545,7 @@ class Close(Workflow, ModelSQL, ModelView):
             if close.diff != 0:
                 lines.append(
                     cls._get_receipt_line(
+                        'move_line',
                         msg + ' Diff',
                         -close.diff,
                         config.diff_account,
@@ -565,7 +576,7 @@ class Close(Workflow, ModelSQL, ModelView):
             Receipt.confirm(ach_receipts)
             Receipt.post(ach_receipts)
             write_log('ACH Bank receipts Posted', closes)
-        write_log('Posted', closes, key='post')
+        write_log('Posted', closes, 'post')
 
     @classmethod
     @ModelView.button
@@ -577,7 +588,7 @@ class Close(Workflow, ModelSQL, ModelView):
         for close in closes:
             sales += close.sales
         Sale.cancel(sales)
-        write_log('Cancelled', closes, key='cancel')
+        write_log('Cancelled', closes, 'cancel')
 
 
 class CloseDetailMixin(ModelSQL, ModelView):
@@ -784,6 +795,6 @@ class CustomerPayable(CustomerReceivablePayableMixin):
 
 class CloseLog(LogActionMixin):
     "Cashier Close Logs"
-    __name__ = "cashier.close.log_action" 
+    __name__ = "cashier.close.log_action"
     resource = fields.Many2One('cashier.close',
         'Close', ondelete='CASCADE', select=True)
