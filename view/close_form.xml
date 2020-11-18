@@ -1,0 +1,78 @@
+<?xml version="1.0"?>
+<!-- This file is part of trytond-cashier module. The COPYRIGHT file at the top level of
+this repository contains the full copyright notices and license terms. -->
+<form>
+    <label name="date"/>
+    <field name="date"/>
+    <label name="number"/>
+    <field name="number"/>
+    <label name="cashier"/>
+    <field name="cashier"/>
+    <newline/>
+    <group col="8" colspan="4" id="totals">
+        <label name="sale_amount"/>
+        <field name="sale_amount"/>
+        <label name="diff"/>
+        <field name="diff"/>
+        <newline/>
+        <label name="cash"/>
+        <field name="cash"/>
+        <label name="ccterminal_amount"/>
+        <field name="ccterminal_amount"/>
+        <label name="document_amount"/>
+        <field name="document_amount"/>
+        <label name="ach_amount"/>
+        <field name="ach_amount"/>
+        <newline/>
+        <label name="customer_receivable_amount"/>
+        <field name="customer_receivable_amount"/>
+        <label name="customer_payable_amount"/>
+        <field name="customer_payable_amount"/>
+    </group>
+    <notebook colspan="4">
+        <page name="sales">
+            <field name="sales" widget="many2many" colspan="4"/>
+        </page>
+        <page name="ccterminals">
+            <field name="ccterminals" colspan="4"/>
+        </page>
+        <page name="documents">
+            <field name="documents" colspan="4"/>
+        </page>
+        <page name="achs">
+            <field name="achs" colspan="4"/>
+        </page>
+        <page name="customers_receivable">
+            <field name="customers_receivable" colspan="4"/>
+        </page>
+        <page name="customers_payable">
+            <field name="customers_payable" colspan="4"/>
+        </page>
+        <page name="note">
+            <field name="note" colspan="4"/>
+        </page>
+        <page col="6" string="Info" id="info">
+            <label name="company"/>
+            <field name="company"/>
+            <label name="currency"/>
+            <field name="currency"/>
+            <label name="cash_bank_receipt"/>
+            <field name="cash_bank_receipt"/>
+            <field name="logs" colspan="6"
+                view_ids="log_action.log_view_tree,log_action.log_view_form"/>
+        </page>
+    </notebook>
+    <group col="6" colspan="4" id="states" yfill="1">
+        <label name="state"/>
+        <field name="state"/>
+        <group col="-1" colspan="4" id="buttons">
+            <button name="cancel" string="Cancel"
+                icon="tryton-cancel"/>
+            <button name="draft" string="Draft"/>
+            <button name="confirm" string="Confirm"
+                icon="tryton-ok"/>
+            <button name="post" string="Post"
+                icon="tryton-go-next"/>
+        </group>
+    </group>
+</form>

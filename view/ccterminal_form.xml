@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<!-- This file is part of trytond-cashier module. The COPYRIGHT file at the top level of
+this repository contains the full copyright notices and license terms. -->
+<form>
+    <label name="cashier"/>
+    <field name="cashier" colspan="3"/>
+    <label name="name"/>
+    <field name="name"/>
+    <label name="active"/>
+    <field name="active"/>
+    <label name="cash_bank"/>
+    <field name="cash_bank"/>
+    <label name="company"/>
+    <field name="company"/>
+    <field name="creditcards" colspan="4"/>
+</form>

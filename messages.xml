@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<!-- This file is part of Tryton cashier module. The COPYRIGHT file at the top level of
+this repository contains the full copyright notices and license terms. -->
+<tryton>
+    <data group="1">
+        <record model="ir.message" id="close_no_sales">
+            <field name="text">Cashier Close "%(close)s" has no Sales.</field>
+        </record>
+        <record model="ir.message" id="close_delete_draft">
+            <field name="text">The state of Cashier Close "%(close)s" must be "Draft" for deletion.</field>
+        </record>
+    </data>
+</tryton>
