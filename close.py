@@ -53,7 +53,10 @@ class Close(Workflow, ModelSQL, ModelView):
             ],
         select=True)
     cashier = fields.Many2One('cashier.cashier', 'Cashier', required=True,
-        states=_STATES, depends=_DEPENDS)
+        domain=[
+            ('company', '=', Eval('company')),
+        ],
+        states=_STATES, depends=_DEPENDS + ['company'])
     currency = fields.Many2One('currency.currency', 'Currency', required=True,
         states={
             'readonly': True,
@@ -66,6 +69,7 @@ class Close(Workflow, ModelSQL, ModelView):
         states=_STATES, depends=_DEPENDS)
     sales = fields.One2Many('sale.sale', 'cashier_close', 'Sales',
         domain=[
+            ('company', '=', Eval('company')),
             If(Eval('state').in_(['draft', 'confirmed']),
                 [
                     ('state', 'in', ['draft', 'quotation']),
@@ -79,7 +83,7 @@ class Close(Workflow, ModelSQL, ModelView):
                     ('cashier_close', '=', Eval('id')),
                 ],
             )
-        ], states=_STATES, depends=_DEPENDS + ['id'])
+        ], states=_STATES, depends=_DEPENDS + ['id', 'company'])
     sale_amount = fields.Function(fields.Numeric('Sale amount',
             digits=(16, Eval('currency_digits', 2)),
             depends=['currency_digits']),
@@ -416,6 +420,7 @@ class Close(Workflow, ModelSQL, ModelView):
     @ModelView.button
     @Workflow.transition('confirmed')
     def confirm(cls, closes):
+        #TODO advertir validar fechas continuas en cierres
         pool = Pool()
         Sale = pool.get('sale.sale')
         sales = []

@@ -77,7 +77,10 @@ class CreditCardTerminal(ModelSQL, ModelView):
                 Eval('context', {}).get('company', -1)),
         ], select=True)
     cashier = fields.Many2One('cashier.cashier', 'Cashier',
-        ondelete='RESTRICT')
+        ondelete='RESTRICT',
+        domain=[
+            ('company', '=', Eval('company')),
+        ], depends=['company'])
     name = fields.Char('Name', required=True, translate=True)
     cash_bank = fields.Many2One('cash_bank.cash_bank',
             'Bank', required=True,

@@ -37,7 +37,6 @@ this repository contains the full copyright notices and license terms. -->
             <field name="group" ref="group_cashier_admin"/>
         </record>
 
-
         <!-- Cashier -->
 
         <record model="ir.ui.view" id="cashier_view_form">
@@ -54,6 +53,9 @@ this repository contains the full copyright notices and license terms. -->
             <field name="name">Cashiers</field>
             <field name="res_model">cashier.cashier</field>
             <field name="search_value"></field>
+            <field name="domain" 
+                eval="[('company', If(Eval('context', {}).contains('company'), '=', '!='), Eval('context', {}).get('company', -1))]"
+                pyson="1"/>
         </record>
         <record model="ir.action.act_window.view" id="act_cashier_form_view1">
             <field name="sequence" eval="10"/>
@@ -103,6 +105,9 @@ this repository contains the full copyright notices and license terms. -->
             <field name="name">Credit Card Terminals</field>
             <field name="res_model">cashier.ccterminal</field>
             <field name="search_value"></field>
+            <field name="domain" 
+                eval="[('company', If(Eval('context', {}).contains('company'), '=', '!='), Eval('context', {}).get('company', -1))]"
+                pyson="1"/>
         </record>
         <record model="ir.action.act_window.view" id="act_ccterminal_form_view1">
             <field name="sequence" eval="10"/>
