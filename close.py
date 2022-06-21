@@ -305,13 +305,13 @@ class Close(Workflow, ModelSQL, ModelView):
     @classmethod
     def set_number(cls, closes):
         pool = Pool()
-        Sequence = pool.get('ir.sequence')
         Config = pool.get('cashier.configuration')
         config = Config(1)
         for close in closes:
             if close.number:
                 continue
-            close.number = Sequence.get_id(config.close_seq.id)
+            close.number = config.get_multivalue(
+                'close_seq', company=close.company.id).get()
         cls.save(closes)
 
     @classmethod

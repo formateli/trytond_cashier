@@ -1,6 +1,6 @@
 #This file is part of tryton-cashier module. The COPYRIGHT file at the top level of
 #this repository contains the full copyright notices and license terms.
-from trytond.pyson import Eval
+from trytond.pyson import Eval, Id
 from trytond.pool import Pool
 from trytond.model import (
     ModelSingleton, ModelView, ModelSQL, fields)
@@ -22,11 +22,13 @@ class Configuration(
     party_sale = fields.MultiValue(fields.Many2One(
         'party.party', "Party Sale"))
     close_seq = fields.MultiValue(fields.Many2One(
-        'ir.sequence', "Close Sequence",
+        'ir.sequence', "Cashier Close Sequence",
         domain=[
-            ('company', 'in', [Eval('context', {}).get('company', -1), None]),
-            ('code', '=', 'cashier.close'),
-        ]))
+            ('company', 'in',
+                [Eval('context', {}).get('company', -1), None]),
+            ('sequence_type', '=',
+                Id('cashier', 'sequence_type_cashier_close')),
+            ]))
     diff_account = fields.MultiValue(fields.Many2One('account.account',
         'Diff Account',
         domain=[
@@ -49,11 +51,13 @@ class ConfigurationSequences(ModelSQL, CompanyValueMixin):
     'Cashier Configuration Sequences'
     __name__ = 'cashier.configuration.sequences'
     close_seq = fields.Many2One(
-        'ir.sequence', "Close Sequence", 
+        'ir.sequence', "Cashier Close Sequence",
         domain=[
-            ('company', 'in', [Eval('context', {}).get('company', -1), None]),
-            ('code', '=', 'cashier.close'),
-        ])
+            ('company', 'in',
+                [Eval('context', {}).get('company', -1), None]),
+            ('sequence_type', '=',
+                Id('cashier', 'sequence_type_cashier_close')),
+            ])
 
 
 class ConfigurationParties(ModelSQL, CompanyValueMixin):

@@ -8,7 +8,7 @@ from trytond.tests.test_tryton import ModuleTestCase, with_transaction
 from trytond.modules.company.tests import create_company, set_company
 from trytond.modules.account.tests import create_chart
 from trytond.modules.cash_bank.tests import (
-    create_cash_bank, create_sequence,
+    create_bank_account, create_cash_bank, create_sequence,
     create_journal, create_fiscalyear)
 from decimal import Decimal
 
@@ -49,7 +49,6 @@ class CashierTestCase(ModuleTestCase):
                     ('name', '=', 'Main Payable'),
                     ])
 
-
             product_category = self._create_product_category(
                     account_expense, account_revenue
                 )
@@ -57,9 +56,14 @@ class CashierTestCase(ModuleTestCase):
 
             journal = create_journal(company, 'journal_cash')
 
+            _, bank_account = create_bank_account(
+                party_bank=self._create_party('Party Bank',
+                    account_receivable, account_payable),
+                party_owner=company.party)
+
             cash_bank_seq = create_sequence(
                 'Cash/Bank Sequence',
-                'cash_bank.receipt',
+                'Cash and Bank Receipt',
                 company)
 
             cash = create_cash_bank(
@@ -69,15 +73,16 @@ class CashierTestCase(ModuleTestCase):
 
             bank = create_cash_bank(
                 company, 'Main Bank', 'bank',
-                journal, account_revenue, cash_bank_seq
+                journal, account_revenue, cash_bank_seq,
+                bank_account
             )
 
             # Configuration
 
             config = Config(
                     party_sale=party,
-                    close_seq=create_sequence('Cashier Close Seq',
-                        'cashier.close', company),
+                    close_seq=create_sequence('Cashier Closes',
+                        'Cashier Closes', company),
                     diff_account=account_expense,
                 )
             config.save()
@@ -190,7 +195,7 @@ class CashierTestCase(ModuleTestCase):
             Close.cancel([close])
             self.assertEqual(close.state, 'cancel')
             for sale in close.sales:
-                self.assertEqual(sale.state, 'cancel')
+                self.assertEqual(sale.state, 'cancelled')
 
             # Draft Close
             Close.draft([close])
@@ -205,7 +210,7 @@ class CashierTestCase(ModuleTestCase):
             Close.post([close])
             self.assertEqual(close.state, 'posted')
             for sale in close.sales:
-                self.assertEqual(sale.invoices[0].state, 'paid')
+                self.assertEqual(sale.invoices[0].state, 'posted')
 
             # Case: Include cash
 
@@ -348,7 +353,6 @@ class CashierTestCase(ModuleTestCase):
         ccterminal = CreditCardTerminal(
             name='Terminal Bank 1',
             cash_bank=bank,
-            receipt_type=bank.receipt_types[0],
             creditcards=creditcards,
         )
 
@@ -358,7 +362,7 @@ class CashierTestCase(ModuleTestCase):
         CreditCard = Pool().get('cashier.ccterminal.creditcard')
         cc = CreditCard(
             type=type_,
-            comission=comission,
+            commission=comission,
             account=account_expense,
         )
         return cc
@@ -445,8 +449,4 @@ class CashierTestCase(ModuleTestCase):
         return uom
 
 
-def suite():
-    suite = trytond.tests.test_tryton.suite()
-    suite.addTests(unittest.TestLoader().loadTestsFromTestCase(
-        CashierTestCase))
-    return suite
+del ModuleTestCase
