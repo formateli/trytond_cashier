@@ -3,44 +3,46 @@
 this repository contains the full copyright notices and license terms. -->
 <tryton>
     <data>
-        <!-- Document -->
+        <!-- Money Terminar Move -->
 
-        <record model="ir.ui.view" id="document_view_form">
-            <field name="model">cashier.close.document</field>
+        <record model="ir.ui.view" id="terminal_move_view_form">
+            <field name="model">cashier.close.terminal.move</field>
             <field name="type">form</field>
-            <field name="name">document_form</field>
+            <field name="name">terminal_move_form</field>
         </record>
-        <record model="ir.ui.view" id="document_view_tree">
-            <field name="model">cashier.close.document</field>
+        <record model="ir.ui.view" id="terminal_move_view_tree">
+            <field name="model">cashier.close.terminal.move</field>
             <field name="type">tree</field>
-            <field name="name">document_tree</field>
+            <field name="name">terminal_move_tree</field>
         </record>
 
-        <!-- ACH -->
+        <!-- Money Terminar Move Type -->
 
-        <record model="ir.ui.view" id="ach_view_form">
-            <field name="model">cashier.close.ach</field>
+        <record model="ir.ui.view" id="terminal_move_type_view_form">
+            <field name="model">cashier.close.terminal.move.type</field>
             <field name="type">form</field>
-            <field name="name">ach_form</field>
+            <field name="name">terminal_move_type_form</field>
         </record>
-        <record model="ir.ui.view" id="ach_view_tree">
-            <field name="model">cashier.close.ach</field>
+        <record model="ir.ui.view" id="terminal_move_type_view_tree">
+            <field name="model">cashier.close.terminal.move.type</field>
             <field name="type">tree</field>
-            <field name="name">ach_tree</field>
+            <field name="name">terminal_move_type_tree</field>
         </record>
 
-        <!-- Credit Card Terminar Move -->
 
-        <record model="ir.ui.view" id="ccterminal_move_view_form">
-            <field name="model">cashier.close.ccterminal.move</field>
+        <!-- Money Terminar Move Amount -->
+
+        <record model="ir.ui.view" id="terminal_move_amount_view_form">
+            <field name="model">cashier.close.terminal.move.amount</field>
             <field name="type">form</field>
-            <field name="name">ccterminal_move_form</field>
+            <field name="name">terminal_move_amount_form</field>
         </record>
-        <record model="ir.ui.view" id="ccterminal_move_view_tree">
-            <field name="model">cashier.close.ccterminal.move</field>
+        <record model="ir.ui.view" id="terminal_move_amount_view_tree">
+            <field name="model">cashier.close.terminal.move.amount</field>
             <field name="type">tree</field>
-            <field name="name">ccterminal_move_tree</field>
+            <field name="name">terminal_move_amount_tree</field>
         </record>
+
 
         <!-- Customer Receivable/Payable -->
 
@@ -65,6 +67,35 @@ this repository contains the full copyright notices and license terms. -->
             <field name="type">tree</field>
             <field name="name">customer_receivable_payable_tree</field>
         </record>
+
+
+        <!-- Collected in Advance -->
+
+        <record model="ir.ui.view" id="advance_view_form">
+            <field name="model">cashier.close.advance</field>
+            <field name="type">form</field>
+            <field name="name">advance_form</field>
+        </record>
+        <record model="ir.ui.view" id="advance_view_tree">
+            <field name="model">cashier.close.advance</field>
+            <field name="type">tree</field>
+            <field name="name">advance_tree</field>
+        </record>
+
+
+        <!-- Collected in Advance applied -->
+
+        <record model="ir.ui.view" id="advance_apply_view_form">
+            <field name="model">cashier.close.advance.apply</field>
+            <field name="type">form</field>
+            <field name="name">advance_apply_form</field>
+        </record>
+        <record model="ir.ui.view" id="advance_apply_view_tree">
+            <field name="model">cashier.close.advance.apply</field>
+            <field name="type">tree</field>
+            <field name="name">advance_apply_tree</field>
+        </record>
+
 
         <!-- Logs -->
 

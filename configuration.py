@@ -7,20 +7,13 @@ from trytond.model import (
 from trytond.modules.company.model import (
     CompanyMultiValueMixin, CompanyValueMixin)
 
-__all__ = [
-        'Configuration',
-        'ConfigurationSequences',
-        'ConfigurationParties'
-        'ConfigurationAccounts',
-    ]
-
 
 class Configuration(
         ModelSingleton, ModelSQL, ModelView, CompanyMultiValueMixin):
     'Cashier Configuration'
     __name__ = 'cashier.configuration'
-    party_sale = fields.MultiValue(fields.Many2One(
-        'party.party', "Party Sale"))
+#    party_sale = fields.MultiValue(fields.Many2One(
+#        'party.party', "Party Sale"))
     close_seq = fields.MultiValue(fields.Many2One(
         'ir.sequence', "Cashier Close Sequence",
         domain=[
@@ -32,6 +25,8 @@ class Configuration(
     diff_account = fields.MultiValue(fields.Many2One('account.account',
         'Diff Account',
         domain=[
+            ('type', '!=', None),
+            ('closed', '!=', True),
             ('company', '=', Eval('context', {}).get('company', -1)),
         ]))
 
@@ -40,8 +35,8 @@ class Configuration(
         pool = Pool()
         if field in {'close_seq'}:
             return pool.get('cashier.configuration.sequences')
-        if field in {'party_sale'}:
-            return pool.get('cashier.configuration.parties')
+#        if field in {'party_sale'}:
+#            return pool.get('cashier.configuration.parties')
         elif field == 'diff_account':
             return pool.get('cashier.configuration.accounts')
         return super(Configuration, cls).multivalue_model(field)
@@ -60,11 +55,11 @@ class ConfigurationSequences(ModelSQL, CompanyValueMixin):
             ])
 
 
-class ConfigurationParties(ModelSQL, CompanyValueMixin):
-    'Cashier Configuration Parties'
-    __name__ = 'cashier.configuration.parties'
-    party_sale = fields.Many2One(
-        'party.party', "Party Sale", required=True)
+#class ConfigurationParties(ModelSQL, CompanyValueMixin):
+#    'Cashier Configuration Parties'
+#    __name__ = 'cashier.configuration.parties'
+#    party_sale = fields.Many2One(
+#        'party.party', "Party Sale", required=True)
 
 
 class ConfigurationAccounts(ModelSQL, CompanyValueMixin):
@@ -73,5 +68,7 @@ class ConfigurationAccounts(ModelSQL, CompanyValueMixin):
     diff_account = fields.Many2One('account.account',
         'Diff Account',
         domain=[
+            ('type', '!=', None),
+            ('closed', '!=', True),
             ('company', '=', Eval('context', {}).get('company', -1)),
         ])

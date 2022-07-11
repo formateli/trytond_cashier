@@ -6,5 +6,5 @@ this repository contains the full copyright notices and license terms. -->
     <field name="party"/>
     <field name="account"/>
     <field name="description"/>
-    <field name="amount_rp"/>
+    <field name="amount_collected"/>
 </tree>

@@ -3,8 +3,8 @@
 this repository contains the full copyright notices and license terms. -->
 <tree>
     <field name="close"/>
-    <field name="party"/>
-    <field name="account"/>
-    <field name="description"/>
-    <field name="amount_rp"/>
+    <field name="terminal"/>
+    <field name="amount"/>
+    <field name="amount_ignore"/>
+    <field name="amount_total"/>
 </tree>

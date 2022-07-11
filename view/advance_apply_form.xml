@@ -4,16 +4,13 @@ this repository contains the full copyright notices and license terms. -->
 <form>
     <label name="close"/>
     <field name="close" colspan="3"/>
-    <label name="type"/>
-    <field name="type"/>
-    <label name="date"/>
-    <field name="date"/>
-    <label name="reference"/>
-    <field name="reference"/>
-    <label name="entity"/>
-    <field name="entity"/>
-    <label name="amount"/>
-    <field name="amount"/>
     <label name="party"/>
     <field name="party"/>
+    <label name="advance"/>
+    <field name="advance"/>
+    <label name="description"/>
+    <field name="description"/>
+    <newline/>
+    <label name="amount_apply"/>
+    <field name="amount_apply"/>
 </form>

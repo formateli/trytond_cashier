@@ -24,6 +24,9 @@ class CashierTestCase(ModuleTestCase):
         ConfigCashBank = pool.get('cash_bank.configuration')
         Config = pool.get('cashier.configuration')
         Close = pool.get('cashier.close')
+        TerminalMove = pool.get('cashier.close.terminal.move')
+        TerminalMoveType = pool.get('cashier.close.terminal.move.type')
+        TerminalMoveAmount = pool.get('cashier.close.terminal.move.amount')
 
         date = datetime.date.today()
         party = self._create_party('Sale Party', None, None)
@@ -80,7 +83,6 @@ class CashierTestCase(ModuleTestCase):
             # Configuration
 
             config = Config(
-                    party_sale=party,
                     close_seq=create_sequence('Cashier Closes',
                         'Cashier Closes', company),
                     diff_account=account_expense,
@@ -111,6 +113,38 @@ class CashierTestCase(ModuleTestCase):
             close.save()
             self.assertEqual(close.sale_amount, Decimal('300.0'))
             self.assertEqual(close.diff, Decimal('300.0'))
+
+            #TODO improve with several terminals
+
+            # Add cash
+            
+            terminal_move = TerminalMove(
+                    terminal=cashier.terminals[0],
+                    types=[
+                        TerminalMoveType(
+                            type=cashier.terminals[0].money_types[0],
+                            amounts=[
+                                TerminalMoveAmount(
+                                    amount_type=cashier.terminals[0].money_types[0].amounts[0],
+                                    amount=Decimal('100.0')
+                                ),
+                                ]
+                            )
+                        ],
+                )
+
+            close.terminals=[terminal_move]
+            close.save()
+
+            self.assertEqual(close.terminal_amount, Decimal('100.0'))
+            self.assertEqual(close.diff, Decimal('200.0'))
+
+            Close.confirm([close])
+            Close.post([close])
+
+            self.assertEqual(len(close.transfers), 1)
+
+            return
 
             # Add documents (Usually cheques)
 
@@ -282,17 +316,6 @@ class CashierTestCase(ModuleTestCase):
             Close.confirm([close])
             Close.post([close])
 
-    def _create_ach(self, party, date, amount, bank):
-        Ach = Pool().get('cashier.close.ach')
-        ach = Ach(
-            party=party,
-            date=date,
-            amount=amount,
-            bank=bank,
-            receipt_type=bank.receipt_types[0]
-        )
-        return ach
-
     def _create_customer_receivable(self, party, amount, payable=False):
         if payable:
             CR = Pool().get('cashier.close.customer_payable')
@@ -334,38 +357,110 @@ class CashierTestCase(ModuleTestCase):
 
         cashier = Cashier(
             name='Cashier 1',
-            ccterminals=self._create_ccterminal(bank, account_expense),
+            terminals=self._create_terminal(bank, account_expense),
             cash_bank_cash=cash,
             receipt_type_cash=cash.receipt_types[0],
+            receipt_type_cash_out=cash.receipt_types[1],
         )
         cashier.save()
         return cashier
 
-    def _create_ccterminal(self, bank, account_expense):
-        CreditCardTerminal = Pool().get('cashier.ccterminal')
+    def _create_terminal(self, bank, account_expense):
+        CashierTerminal = Pool().get('cashier.terminal')
 
-        creditcards = []
-        creditcards.append(
-            self._create_creditcard('visa', Decimal('0.1'), account_expense))
-        creditcards.append(
-            self._create_creditcard('master', Decimal('0.2'), account_expense))
-
-        ccterminal = CreditCardTerminal(
-            name='Terminal Bank 1',
+        terminal = CashierTerminal(
+            name='Terminal 1',
             cash_bank=bank,
-            creditcards=creditcards,
-        )
+            receipt_type=bank.receipt_types[0],
+            money_types=self._create_money_types(account_expense)
+            )
 
-        return [ccterminal,]
+        return [terminal]
 
-    def _create_creditcard(self, type_, comission, account_expense):
-        CreditCard = Pool().get('cashier.ccterminal.creditcard')
-        cc = CreditCard(
+    def _create_discount(self, name, type_, amount):
+        Discount = Pool().get('cashier.discount')
+        discount = Discount(
+            name=name,
             type=type_,
-            commission=comission,
-            account=account_expense,
-        )
-        return cc
+            amount=amount
+            )
+        discount.save()
+        return discount
+
+    def _create_discount_2(self, model, discount, account):
+        Discount = Pool().get(model)
+        discount = Discount(
+            discount=discount,
+            account=account
+            )
+        return discount
+
+    def _create_money_types(self, account_expense):
+        pool = Pool()
+        MoneyType = pool.get('cashier.terminal.moneytype.type')
+        MoneyTerminalType = pool.get('cashier.terminal.moneytype')
+        CashBankDocument = pool.get('cash_bank.document.type')
+
+        discounts = [
+            self._create_discount('Fixed', 'fixed', Decimal('0.5')),
+            self._create_discount('Percentage 1', 'percentage', Decimal('15.0')),
+            self._create_discount('Percentage 2', 'percentage', Decimal('25.0'))
+            ]
+
+        mt = MoneyType.search([('name', '=', 'Cash')])[0]
+
+        mt_cash = MoneyTerminalType(
+            type=mt,
+            discounts=[
+                self._create_discount_2(
+                    'cashier.terminal.moneytype.discount',
+                    discounts[0], account_expense),
+                self._create_discount_2(
+                    'cashier.terminal.moneytype.discount',
+                    discounts[1], account_expense),
+                ],
+            amounts=[
+                self._create_moneytype_amount(
+                    'Base', None, True, None),
+                ],
+            )
+
+        cb_doc = CashBankDocument.search([
+                ('name', '=', 'Check')])[0]
+
+        mt_cheque = MoneyTerminalType(
+            type=mt,
+            is_document=True,
+            cash_bank_document=cb_doc,
+            discounts=None,
+            amounts=[
+                self._create_moneytype_amount(
+                    'Base', None, True, None),
+                self._create_moneytype_amount(
+                    'Tips', discounts[2], False,
+                    account_expense)
+                ],
+            )
+
+
+        return [mt_cash, mt_cheque]
+
+    def _create_moneytype_amount(self, name, discount,
+                affect_close_total, account_alternate):
+        Amount = Pool().get('cashier.terminal.moneytype.amount')
+        disc = None
+        if discount:
+            disc = [self._create_discount_2(
+                    'cashier.terminal.moneytype.amount.discount',
+                    discount, account_alternate)]
+
+        amount = Amount(
+            name=name,
+            discounts=disc,
+            affect_close_total=affect_close_total,
+            account_alternate=account_alternate
+            )
+        return amount
 
     def _create_sale(self, date, party, product, amount):
         pool = Pool()

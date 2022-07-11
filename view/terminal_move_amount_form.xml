@@ -2,12 +2,10 @@
 <!-- This file is part of trytond-cashier module. The COPYRIGHT file at the top level of
 this repository contains the full copyright notices and license terms. -->
 <form>
-<!--
-    <label name="party_sale"/>    
-    <field name="party_sale"/>
--->
-    <label name="close_seq"/>
-    <field name="close_seq"/>
-    <label name="diff_account"/>
-    <field name="diff_account"/>
+    <label name="type"/>
+    <field name="type" colspan="3"/>
+    <label name="amount_type"/>
+    <field name="amount_type"/>
+    <label name="amount"/>
+    <field name="amount"/>
 </form>
