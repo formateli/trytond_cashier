@@ -2,31 +2,41 @@
 <!-- This file is part of trytond-cashier module. The COPYRIGHT file at the top level of
 this repository contains the full copyright notices and license terms. -->
 <form>
-    <group col="6" colspan="4" id="totals">
+    <group col="6" colspan="4" id="header">
         <label name="date"/>
         <field name="date"/>
         <label name="cashier"/>
 	<field name="cashier"/>
         <label name="number"/>
-        <field name="number"/>
-        <newline/>
-        <label name="sale_amount"/>
-        <field name="sale_amount"/>
-        <label name="diff"/>
-        <field name="diff"/>
-        <newline/>
-        <label name="terminal_amount"/>
-	<field name="terminal_amount"/>
-        <label name="customer_receivable_amount"/>
-        <field name="customer_receivable_amount"/>
-        <label name="customer_payable_amount"/>
-	<field name="customer_payable_amount"/>
-        <label name="collected_in_advance_amount"/>
-	<field name="collected_in_advance_amount"/>
-        <label name="collected_in_advance_apply_amount"/>
-        <field name="collected_in_advance_apply_amount"/>
+        <field name="number"/>  
     </group>
     <notebook colspan="4">
+        <page id="totals" string="Totals">
+            <group col="6" colspan="4" id="totals">
+                <label name="sale_amount"/>
+                <field name="sale_amount"/>
+                <label name="diff"/>
+                <field name="diff"/>
+                <newline/>
+                <label name="terminal_amount"/>
+        	<field name="terminal_amount"/>
+                <label name="customer_receivable_amount"/>
+                <field name="customer_receivable_amount"/>
+                <label name="customer_payable_amount"/>
+        	<field name="customer_payable_amount"/>
+                <label name="collected_in_advance_amount"/>
+        	<field name="collected_in_advance_amount"/>
+                <label name="collected_in_advance_apply_amount"/>
+		<field name="collected_in_advance_apply_amount"/>
+                <newline/>
+                <label name="total_affected"/>
+        	<field name="total_affected"/>
+                <label name="total_extra"/>
+        	<field name="total_extra"/>
+                <label name="total_collected"/>
+        	<field name="total_collected"/>
+            </group>
+        </page>
         <page name="sales">
             <field name="sales" widget="many2many" colspan="4"/>
         </page>

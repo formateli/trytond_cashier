@@ -145,6 +145,15 @@ class Close(Workflow, ModelSQL, ModelView):
     diff_cache = Monetary(
         'Diff Cache', digits='currency', currency='currency',
         readonly=True)
+    total_affected = fields.Function(Monetary('Total Affected',
+            digits='currency', currency='currency'),
+        'get_total_affected')
+    total_extra = fields.Function(Monetary('Total Extra',
+            digits='currency', currency='currency'),
+        'get_total_extra')
+    total_collected = fields.Function(Monetary('Total Collected',
+            digits='currency', currency='currency'),
+        'get_total_collected')
     note = fields.Text('Notes', size=None)
     cash_bank_receipt = fields.Many2One('cash_bank.receipt',
         'Receipt', readonly=True)
@@ -200,7 +209,8 @@ class Close(Workflow, ModelSQL, ModelView):
 
     @fields.depends('sales',
         'terminals', 'customers_receivable',
-        'customers_payable', 'collected_in_advance')
+        'customers_payable', 'collected_in_advance',
+        'collected_in_advance_apply')
     def _get_amounts(self):
         self.sale_amount = self.get_sale_amount()
         self.terminal_amount = self.get_terminal_amount()
@@ -212,6 +222,9 @@ class Close(Workflow, ModelSQL, ModelView):
             self.get_collected_in_advance_amount()
         self.collected_in_advance_apply_amount = \
             self.get_collected_in_advance_apply_amount()
+        self.total_affected = self.get_total_affected()
+        self.total_extra = self.get_total_extra()
+        self.total_collected = self.get_total_collected()
         self.diff = self.get_diff()
 
     @fields.depends(methods=['_get_amounts'])
@@ -275,19 +288,37 @@ class Close(Workflow, ModelSQL, ModelView):
     def _get_amount_or_zero(self, amount):
         return amount if amount else Decimal('0.0')
 
-    @fields.depends('terminal_amount', 'customer_receivable_amount',
-            'customer_payable_amount')
+    @fields.depends('sale_amount', 'total_affected')
     def get_diff(self, name=None):
+        return self._get_amount_or_zero(self.sale_amount) - \
+                self._get_amount_or_zero(self.total_affected)
+
+    @fields.depends('customer_receivable_amount',
+            'customer_payable_amount', 'collected_in_advance_amount',
+            'collected_in_advance_apply_amount', 'terminal_amount')
+    def get_total_affected(self, name=None):
         res = (
-                self._get_amount_or_zero(self.sale_amount) +
-                self._get_amount_or_zero(self.customer_payable_amount) +
-                self._get_amount_or_zero(self.collected_in_advance_amount)
-            ) - (
                 self._get_amount_or_zero(self.terminal_amount) +
                 self._get_amount_or_zero(self.customer_receivable_amount) +
                 self._get_amount_or_zero(self.collected_in_advance_apply_amount)
+            ) - (
+                self._get_amount_or_zero(self.customer_payable_amount) +
+                self._get_amount_or_zero(self.collected_in_advance_amount)
             )
         return res
+
+    @fields.depends('terminals', 'collected_in_advance_apply')
+    def get_total_extra(self, name=None):
+        res = self._get_amount(self.terminals,
+                'amount_ignore')
+        res += self._get_amount(self.collected_in_advance_apply,
+                'amount_apply_ignore')
+        return res
+
+    @fields.depends('total_affected', 'total_extra')
+    def get_total_collected(self, name=None):
+        return self._get_amount_or_zero(self.total_affected) + \
+                self._get_amount_or_zero(self.total_extra)
 
     def get_rec_name(self, name):
         if self.number:
@@ -730,13 +761,13 @@ class CloseDetailMixin(ModelSQL, ModelView):
         states=_STATES_DOC, depends=_DEPENDS_DOC)
     amount = fields.Function(Monetary('Amount',
         digits='currency', currency='currency'),
-        'on_change_with_amount')
+        'get_amount')
     amount_ignore = fields.Function(Monetary('Ignored',
         digits='currency', currency='currency'),
-        'on_change_with_amount_ignore')
+        'get_amount_ignore')
     amount_total = fields.Function(Monetary('Total',
         digits='currency', currency='currency'),
-        'on_change_with_amount_total')
+        'get_amount_total')
     currency = fields.Function(
         fields.Many2One('currency.currency', 'Currency'),
         'on_change_with_currency')
@@ -775,14 +806,14 @@ class CloseDetailMixin(ModelSQL, ModelView):
     def on_change_with_party_required(self, name=None):
         pass
 
-    def on_change_with_amount(self, name=None):
+    def get_amount(self, name=None):
         pass
 
-    def on_change_with_amount_ignore(self, name=None):
+    def get_amount_ignore(self, name=None):
         pass
 
     @fields.depends('amount', 'amount_ignore')
-    def on_change_with_amount_total(self, name=None):
+    def get_amount_total(self, name=None):
         res = Decimal('0.0')
         if self.amount:
             res += self.amount
@@ -815,25 +846,34 @@ class MoneyTerminalMove(CloseDetailMixin):
         if not type_obj:
             return res
         for tp in type_obj:
-            if not tp or not tp.amount:
-                continue
             if check_ignore:
+                if not tp or not tp.amount:
+                    continue
                 res += tp.amount
             else:
+                if not tp or not tp.amount_ignore:
+                    continue
                 res += tp.amount_ignore
         return res
 
     @fields.depends('types')
-    def on_change_with_amount(self, name=None):
+    def on_change_types(self):
+        self.amount = Decimal('0.0')
+        self.amount_ignore = Decimal('0.0')
+        self.amount_total = Decimal('0.0')
+        if not self.types:
+            return
+        self.amount = self.get_amount()
+        self.amount_ignore = self.get_amount_ignore()
+        self.amount_total = self.get_amount_total()
+
+    @fields.depends('types')
+    def get_amount(self, name=None):
         return self._get_amount(self.types, True)
 
     @fields.depends('types')
-    def on_change_with_amount_ignore(self, name=None):
+    def get_amount_ignore(self, name=None):
         return self._get_amount(self.types, False)
-
-    @fields.depends('types', 'amount', 'amount_ignore')
-    def on_change_with_amount_total(self, name=None):
-        return super(MoneyTerminalMove, self).on_change_with_amount_total(name)
 
 
 class MoneyTerminalMoveType(ModelSQL, ModelView):
@@ -1095,6 +1135,24 @@ class ColletedInAdvanceApply(CloseDetailMixin):
     amount_apply = Monetary('Amount Applied', required=True,
         digits='currency', currency='currency',
         states=_STATES_DOC, depends=_DEPENDS_DOC)
+    affect_close_total = fields.Boolean('Affect Cashier Close Total')
+    account_alternate = fields.Many2One('account.account', "Alternate Account",
+        domain=[
+            ('type', '!=', None),
+            ('closed', '!=', True),
+            ('company', If(Eval('context', {}).contains('company'), '=', '!='),
+                Eval('context', {}).get('company', -1))
+            ],
+        states={
+            'required': Not(Bool(Eval('affect_close_total'))),
+            'invisible': Bool(Eval('affect_close_total'))
+            }, depends=['affect_close_total'])
+    amount_apply_affected = fields.Function(Monetary('Amount Apply Affected',
+            digits='currency', currency='currency'),
+        'on_change_with_amount_apply_affected')
+    amount_apply_ignore = fields.Function(Monetary('Amount Apply Ignored',
+            digits='currency', currency='currency'),
+        'on_change_with_amount_apply_ignore')
 
     @classmethod
     def __setup__(cls):
@@ -1103,10 +1161,30 @@ class ColletedInAdvanceApply(CloseDetailMixin):
         cls.party.states['required'] = True
         cls.party.states['readonly'] = Bool(Eval('advance'))
 
+    @staticmethod
+    def default_affect_close_total():
+        return True
+
     @fields.depends('advance')
     def on_change_with_amount_apply(self, name=None):
         if self.advance:
             return self.advance.amount_to_apply
+
+    @fields.depends('amount_apply', 'affect_close_total')
+    def on_change_with_amount_apply_affected(self, name=None):
+        res = Decimal('0.0')
+        if self.affect_close_total:
+            if self.amount_apply:
+                res = self.amount_to_apply
+        return res
+
+    @fields.depends('amount_apply', 'affect_close_total')
+    def on_change_with_amount_apply_ignore(self, name=None):
+        res = Decimal('0.0')
+        if not self.affect_close_total:
+            if self.amount_apply:
+                res = self.amount_to_apply
+        return res
 
 
 class CloseLog(LogActionMixin):
