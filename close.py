@@ -466,7 +466,6 @@ class Close(Workflow, ModelSQL, ModelView):
     @ModelView.button
     @Workflow.transition('confirmed')
     def confirm(cls, closes):
-        #TODO advertir validar fechas continuas en cierres
         pool = Pool()
         Sale = pool.get('sale.sale')
         sales = []
