@@ -283,7 +283,7 @@ class Close(Workflow, ModelSQL, ModelView):
     @fields.depends('collected_in_advance_apply')
     def get_collected_in_advance_apply_amount(self, name=None):
         return self._get_amount(self.collected_in_advance_apply,
-                'amount_apply')
+                'amount_apply_affected')
 
     def _get_amount_or_zero(self, amount):
         return amount if amount else Decimal('0.0')
@@ -498,7 +498,10 @@ class Close(Workflow, ModelSQL, ModelView):
         for close in closes:
             Sale.confirm(close.sales)
             Sale.process(close.sales)
-            cls._sales_to_invoice(close.sales)
+            with Transaction().set_context(_skip_warnings=True):
+                # Evita la advertencia de pago anterior a la fecha
+                # de la factura cuando se aplica pagos por adelantado.
+                cls._sales_to_invoice(close.sales)
 
             msg = '[' + close.rec_name + '-' + close.cashier.rec_name + ']'
 
@@ -576,6 +579,16 @@ class Close(Workflow, ModelSQL, ModelView):
                         cia.advance.receipt_line.account,
                         cia.party,
                         None, cia.advance, None))
+
+                if not cia.affect_close_total:
+                    lines.append(
+                        cls._get_receipt_line(
+                            'move_line',
+                            msg + ' ' + cia.description if cia.description else msg,
+                            cia.amount_apply_ignore,
+                            cia.account_alternate,
+                            cia.party,
+                            None, None, None))
 
             if close.diff != 0:
                 lines.append(
@@ -1174,7 +1187,7 @@ class ColletedInAdvanceApply(CloseDetailMixin):
         res = Decimal('0.0')
         if self.affect_close_total:
             if self.amount_apply:
-                res = self.amount_to_apply
+                res = self.amount_apply
         return res
 
     @fields.depends('amount_apply', 'affect_close_total')
@@ -1182,7 +1195,7 @@ class ColletedInAdvanceApply(CloseDetailMixin):
         res = Decimal('0.0')
         if not self.affect_close_total:
             if self.amount_apply:
-                res = self.amount_to_apply
+                res = self.amount_apply
         return res
 
 

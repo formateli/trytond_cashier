@@ -8,9 +8,11 @@ this repository contains the full copyright notices and license terms. -->
     <field name="party"/>
     <label name="account"/>
     <field name="account"/>
-    <label name="description"/>
-    <field name="description"/>
+    <label name="reference"/>
+    <field name="reference"/>
     <newline/>
+    <label name="description"/>
+    <field name="description" colspan="3"/>
     <label name="amount_rp"/>
     <field name="amount_rp"/>
 </form>
