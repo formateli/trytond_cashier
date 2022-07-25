@@ -64,6 +64,11 @@ class Cashier(ModelSQL, ModelView):
     def on_change_with_receipt_type_cash_out(self):
         return
 
+    @classmethod
+    def __setup__(cls):
+        super(Cashier, cls).__setup__()
+        cls._order[0] = ('name', 'ASC')
+
 
 class MoneyTerminal(ModelSQL, ModelView):
     'Money Terminal'
@@ -93,6 +98,11 @@ class MoneyTerminal(ModelSQL, ModelView):
         'terminal', 'Money Types')
     group = fields.Boolean('Group')
     active = fields.Boolean('Active')
+
+    @classmethod
+    def __setup__(cls):
+        super(MoneyTerminal, cls).__setup__()
+        cls._order[0] = ('name', 'ASC')
 
     @staticmethod
     def default_active():
@@ -259,6 +269,11 @@ class CashierDiscount(ModelSQL, ModelView):
         'get_amount_digits')
     active = fields.Boolean('Active')
 
+    @classmethod
+    def __setup__(cls):
+        super(CashierDiscount, cls).__setup__()
+        cls._order[0] = ('name', 'ASC')
+
     @staticmethod
     def default_active():
         return True
@@ -286,6 +301,11 @@ class MoneyTypeType(ModelSQL, ModelView):
     __name__ = 'cashier.terminal.moneytype.type'
     name = fields.Char('Name', required=True, translate=True)
     active = fields.Boolean('Active')
+
+    @classmethod
+    def __setup__(cls):
+        super(MoneyTypeType, cls).__setup__()
+        cls._order[0] = ('name', 'ASC')
 
     @staticmethod
     def default_active():

@@ -634,9 +634,10 @@ class Close(Workflow, ModelSQL, ModelView):
         transfers = []
 
         for close in closes:
-            msg = '[' + close.rec_name + '-' + close.cashier.rec_name + ']'
+            close_msg = '[' + close.rec_name + '-' + \
+                    close.cashier.name + ']'
             for terminal in close.terminals:
-                msg += '[' + terminal.terminal.name + ']'
+                msg = close_msg + '[' + terminal.terminal.name + ']'
                 group = terminal.terminal.group
                 cash = Decimal('0.0')
                 docs = []
