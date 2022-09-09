@@ -1144,11 +1144,12 @@ class ColletedInAdvanceApply(CloseDetailMixin):
             ('state', '=', 'pending'),
             ('type', '=', 'in'),
             ('company', '=', Eval('context', {}).get('company', -1)),
-        ])
+        ], states=_STATES_DOC, depends=_DEPENDS_DOC)
     amount_apply = Monetary('Amount Applied', required=True,
         digits='currency', currency='currency',
         states=_STATES_DOC, depends=_DEPENDS_DOC)
-    affect_close_total = fields.Boolean('Affect Cashier Close Total')
+    affect_close_total = fields.Boolean('Affect Cashier Close Total',
+            states=_STATES_DOC, depends=_DEPENDS_DOC)
     account_alternate = fields.Many2One('account.account', "Alternate Account",
         domain=[
             ('type', '!=', None),
@@ -1158,8 +1159,9 @@ class ColletedInAdvanceApply(CloseDetailMixin):
             ],
         states={
             'required': Not(Bool(Eval('affect_close_total'))),
-            'invisible': Bool(Eval('affect_close_total'))
-            }, depends=['affect_close_total'])
+            'invisible': Bool(Eval('affect_close_total')),
+            'readonly': Eval('close_state') != 'draft'
+            }, depends=_DEPENDS_DOC + ['affect_close_total'])
     amount_apply_affected = fields.Function(Monetary('Amount Apply Affected',
             digits='currency', currency='currency'),
         'on_change_with_amount_apply_affected')
