@@ -8,3 +8,12 @@ class Receipt(metaclass=PoolMeta):
     __name__ = 'cash_bank.receipt'
     cashier_close = fields.Many2One(
         'cashier.close', 'Cashier Close')
+
+    @classmethod
+    def copy(cls, receipts, default=None):
+        if default is None:
+            default = {}
+        else:
+            default = default.copy()
+        default.setdefault('cashier_close', None)
+        return super().copy(receipts, default=default)
