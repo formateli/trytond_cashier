@@ -42,8 +42,7 @@ class Close(Workflow, ModelSQL, ModelView):
         domain=[
             ('id', If(Eval('context', {}).contains('company'), '=', '!='),
                 Eval('context', {}).get('company', -1)),
-            ],
-        select=True)
+            ])
     cashier = fields.Many2One('cashier.cashier', 'Cashier', required=True,
         domain=[
             ('company', '=', Eval('company')),
@@ -56,7 +55,7 @@ class Close(Workflow, ModelSQL, ModelView):
         states={
             'readonly': True,
         })
-    number = fields.Char('Number', size=None, readonly=True, select=True)
+    number = fields.Char('Number', size=None, readonly=True)
     state = fields.Selection(STATES, 'State', readonly=True, required=True)
     date = fields.Date('Date', required=True,
         states=_STATES, depends=_DEPENDS)
@@ -1206,4 +1205,4 @@ class CloseLog(LogActionMixin):
     "Cashier Close Logs"
     __name__ = "cashier.close.log_action"
     resource = fields.Many2One('cashier.close',
-        'Close', ondelete='CASCADE', select=True)
+        'Close', ondelete='CASCADE')

@@ -16,7 +16,7 @@ class Cashier(ModelSQL, ModelView):
         domain=[
             ('id', If(Eval('context', {}).contains('company'), '=', '!='),
                 Eval('context', {}).get('company', -1)),
-        ], select=True)
+        ])
     name = fields.Char('Name', required=True, translate=True)
     terminals = fields.One2Many('cashier.terminal',
         'cashier', 'Money Terminals')
@@ -74,7 +74,7 @@ class MoneyTerminal(ModelSQL, ModelView):
     'Money Terminal'
     __name__ = 'cashier.terminal'
     cashier = fields.Many2One('cashier.cashier', 'Cashier',
-        required=True, ondelete='CASCADE', select=True)
+        required=True, ondelete='CASCADE')
     name = fields.Char('Name', required=True, translate=True)
     cash_bank = fields.Many2One('cash_bank.cash_bank',
         'Bank', required=True,
