@@ -37,7 +37,6 @@ this repository contains the full copyright notices and license terms. -->
             <field name="group" ref="group_cashier_admin"/>
         </record>
 
-
         <!-- Cashier -->
 
         <record model="ir.ui.view" id="cashier_view_form">
@@ -54,6 +53,9 @@ this repository contains the full copyright notices and license terms. -->
             <field name="name">Cashiers</field>
             <field name="res_model">cashier.cashier</field>
             <field name="search_value"></field>
+            <field name="domain" 
+                eval="[('company', If(Eval('context', {}).contains('company'), '=', '!='), Eval('context', {}).get('company', -1))]"
+                pyson="1"/>
         </record>
         <record model="ir.action.act_window.view" id="act_cashier_form_view1">
             <field name="sequence" eval="10"/>
@@ -87,48 +89,122 @@ this repository contains the full copyright notices and license terms. -->
         </record>
 
 
-        <!-- Credit Card Terminal -->
+        <!-- Money Type -->
 
-        <record model="ir.ui.view" id="ccterminal_view_form">
-            <field name="model">cashier.ccterminal</field>
+        <record model="ir.ui.view" id="moneytypetype_view_form">
+            <field name="model">cashier.terminal.moneytype.type</field>
             <field name="type">form</field>
-            <field name="name">ccterminal_form</field>
+            <field name="name">moneytypetype_form</field>
         </record>
-        <record model="ir.ui.view" id="ccterminal_view_tree">
-            <field name="model">cashier.ccterminal</field>
+        <record model="ir.ui.view" id="moneytypetype_view_tree">
+            <field name="model">cashier.terminal.moneytype.type</field>
             <field name="type">tree</field>
-            <field name="name">ccterminal_tree</field>
+            <field name="name">moneytypetype_tree</field>
         </record>
-        <record model="ir.action.act_window" id="act_ccterminal_form">
-            <field name="name">Credit Card Terminals</field>
-            <field name="res_model">cashier.ccterminal</field>
+        <record model="ir.action.act_window" id="act_moneytypetype_form">
+            <field name="name">Money Types</field>
+            <field name="res_model">cashier.terminal.moneytype.type</field>
             <field name="search_value"></field>
         </record>
-        <record model="ir.action.act_window.view" id="act_ccterminal_form_view1">
+        <record model="ir.action.act_window.view" id="act_moneytypetype_form_view1">
             <field name="sequence" eval="10"/>
-            <field name="view" ref="ccterminal_view_tree"/>
-            <field name="act_window" ref="act_ccterminal_form"/>
+            <field name="view" ref="moneytypetype_view_tree"/>
+            <field name="act_window" ref="act_moneytypetype_form"/>
         </record>
-        <record model="ir.action.act_window.view" id="act_ccterminal_form_view2">
+        <record model="ir.action.act_window.view" id="act_moneytypetype_form_view2">
             <field name="sequence" eval="20"/>
-            <field name="view" ref="ccterminal_view_form"/>
-            <field name="act_window" ref="act_ccterminal_form"/>
+            <field name="view" ref="moneytypetype_view_form"/>
+            <field name="act_window" ref="act_moneytypetype_form"/>
         </record>
 
-        <menuitem name="Credit Card Terminals" id="menu_ccterminal"
-            sequence="20" action="act_ccterminal_form"
+        <menuitem name="Money Types" id="menu_moneytypetype"
+            sequence="7" action="act_moneytypetype_form"
             parent="menu_configuration"/>
 
-        <record model="ir.model.access" id="access_ccterminal">
-            <field name="model" search="[('model', '=', 'cashier.ccterminal')]"/>
+        <record model="ir.model.access" id="access_moneytypetype">
+            <field name="model" search="[('model', '=', 'cashier.terminal.moneytype.type')]"/>
             <field name="perm_read" eval="True"/>
             <field name="perm_write" eval="False"/>
             <field name="perm_create" eval="False"/>
             <field name="perm_delete" eval="False"/>
         </record>
-        <record model="ir.model.access" id="access_ccterminal_admin">
-            <field name="model" search="[('model', '=', 'cashier.ccterminal')]"/>
-            <field name="group" ref="group_cashier_admin"/>
+        <record model="ir.model.access" id="access_moneytypetype_admin">
+            <field name="model" search="[('model', '=', 'cashier.terminal.moneytype.type')]"/>
+            <field name="group" ref="res.group_admin"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_delete" eval="True"/>
+        </record>
+
+        <record id="moneytype_cash" model="cashier.terminal.moneytype.type">
+		<field name="name">Cash</field>
+                <field name="active" eval="True" />
+	</record>
+        <record id="moneytype_ach" model="cashier.terminal.moneytype.type">
+		<field name="name">ACH</field>
+                <field name="active" eval="True" />
+	</record>
+        <record id="moneytype_visa" model="cashier.terminal.moneytype.type">
+		<field name="name">Visa</field>
+                <field name="active" eval="True" />
+	</record>
+        <record id="moneytype_mastercard" model="cashier.terminal.moneytype.type">
+		<field name="name">Master Card</field>
+                <field name="active" eval="True" />
+        </record>
+        <record id="moneytype_amex" model="cashier.terminal.moneytype.type">
+		<field name="name">Amex</field>
+                <field name="active" eval="True" />
+        </record>
+        <record id="moneytype_debitcard" model="cashier.terminal.moneytype.type">
+		<field name="name">Debit Card</field>
+                <field name="active" eval="True" />
+        </record>
+
+
+        <!-- Cashier discount -->
+
+        <record model="ir.ui.view" id="discount_view_form">
+            <field name="model">cashier.discount</field>
+            <field name="type">form</field>
+            <field name="name">discount_form</field>
+        </record>
+        <record model="ir.ui.view" id="discount_view_tree">
+            <field name="model">cashier.discount</field>
+            <field name="type">tree</field>
+            <field name="name">discount_tree</field>
+        </record>
+        <record model="ir.action.act_window" id="act_discount_form">
+            <field name="name">Discounts</field>
+            <field name="res_model">cashier.discount</field>
+            <field name="search_value"></field>
+        </record>
+        <record model="ir.action.act_window.view" id="act_discount_form_view1">
+            <field name="sequence" eval="10"/>
+            <field name="view" ref="discount_view_tree"/>
+            <field name="act_window" ref="act_discount_form"/>
+        </record>
+        <record model="ir.action.act_window.view" id="act_discount_form_view2">
+            <field name="sequence" eval="20"/>
+            <field name="view" ref="discount_view_form"/>
+            <field name="act_window" ref="act_discount_form"/>
+        </record>
+
+        <menuitem name="Discounts" id="menu_discount"
+            sequence="9" action="act_discount_form"
+            parent="menu_configuration"/>
+
+        <record model="ir.model.access" id="access_discount">
+            <field name="model" search="[('model', '=', 'cashier.discount')]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_delete" eval="False"/>
+        </record>
+        <record model="ir.model.access" id="access_discount_admin">
+            <field name="model" search="[('model', '=', 'cashier.discount')]"/>
+            <field name="group" ref="res.group_admin"/>
             <field name="perm_read" eval="True"/>
             <field name="perm_write" eval="True"/>
             <field name="perm_create" eval="True"/>
@@ -136,17 +212,102 @@ this repository contains the full copyright notices and license terms. -->
         </record>
 
 
-        <!-- Credit Card -->
+        <!-- Money Terminal -->
 
-        <record model="ir.ui.view" id="creditcard_view_form">
-            <field name="model">cashier.ccterminal.creditcard</field>
+        <record model="ir.ui.view" id="terminal_view_form">
+            <field name="model">cashier.terminal</field>
             <field name="type">form</field>
-            <field name="name">creditcard_form</field>
+            <field name="name">terminal_form</field>
         </record>
-        <record model="ir.ui.view" id="creditcard_view_tree">
-            <field name="model">cashier.ccterminal.creditcard</field>
+        <record model="ir.ui.view" id="terminal_view_tree">
+            <field name="model">cashier.terminal</field>
             <field name="type">tree</field>
-            <field name="name">creditcard_tree</field>
+            <field name="name">terminal_tree</field>
         </record>
+
+
+        <!-- Terminal Money Type -->
+
+        <record model="ir.ui.view" id="terminal_moneytype_view_form">
+            <field name="model">cashier.terminal.moneytype</field>
+            <field name="type">form</field>
+            <field name="name">terminal_moneytype_form</field>
+        </record>
+        <record model="ir.ui.view" id="terminal_moneytype_view_tree">
+            <field name="model">cashier.terminal.moneytype</field>
+            <field name="type">tree</field>
+            <field name="name">terminal_moneytype_tree</field>
+        </record>
+
+
+        <!-- Terminal Money Type Amount -->
+
+        <record model="ir.ui.view" id="terminal_moneytype_amount_view_form">
+            <field name="model">cashier.terminal.moneytype.amount</field>
+            <field name="type">form</field>
+            <field name="name">terminal_moneytype_amount_form</field>
+        </record>
+        <record model="ir.ui.view" id="terminal_moneytype_amount_view_tree">
+            <field name="model">cashier.terminal.moneytype.amount</field>
+            <field name="type">tree</field>
+            <field name="name">terminal_moneytype_amount_tree</field>
+        </record>
+
+
+        <!-- Terminal Money Type Discount -->
+
+        <record model="ir.ui.view" id="terminal_moneytype_discount_view_form">
+            <field name="model">cashier.terminal.moneytype.discount</field>
+            <field name="type">form</field>
+            <field name="name">terminal_moneytype_discount_form</field>
+        </record>
+        <record model="ir.ui.view" id="terminal_moneytype_discount_view_tree">
+            <field name="model">cashier.terminal.moneytype.discount</field>
+            <field name="type">tree</field>
+            <field name="name">terminal_moneytype_discount_tree</field>
+        </record>
+
+
+        <!-- Terminal Money Type Discount Charge -->
+
+        <record model="ir.ui.view" id="terminal_moneytype_discount_charge_view_form">
+            <field name="model">cashier.terminal.moneytype.discount.charge</field>
+            <field name="type">form</field>
+            <field name="name">terminal_moneytype_discount_charge_form</field>
+        </record>
+        <record model="ir.ui.view" id="terminal_moneytype_discount_charge_view_tree">
+            <field name="model">cashier.terminal.moneytype.discount.charge</field>
+            <field name="type">tree</field>
+            <field name="name">terminal_moneytype_discount_charge_tree</field>
+        </record>
+
+
+        <!-- Terminal Money Type Amount Discount -->
+
+        <record model="ir.ui.view" id="terminal_moneytype_amount_discount_view_form">
+            <field name="model">cashier.terminal.moneytype.amount.discount</field>
+            <field name="type">form</field>
+            <field name="name">terminal_moneytype_amount_discount_form</field>
+        </record>
+        <record model="ir.ui.view" id="terminal_moneytype_amount_discount_view_tree">
+            <field name="model">cashier.terminal.moneytype.amount.discount</field>
+            <field name="type">tree</field>
+            <field name="name">terminal_moneytype_amount_discount_tree</field>
+        </record>
+
+
+        <!-- Terminal Money Type Amount Discount Charge -->
+
+        <record model="ir.ui.view" id="terminal_moneytype_amount_discount_charge_view_form">
+            <field name="model">cashier.terminal.moneytype.amount.discount.charge</field>
+            <field name="type">form</field>
+            <field name="name">terminal_moneytype_discount_charge_form</field>
+        </record>
+        <record model="ir.ui.view" id="terminal_moneytype_amount_discount_charge_view_tree">
+            <field name="model">cashier.terminal.moneytype.amount.discount.charge</field>
+            <field name="type">tree</field>
+            <field name="name">terminal_moneytype_discount_charge_tree</field>
+        </record>
+
     </data>
 </tryton>

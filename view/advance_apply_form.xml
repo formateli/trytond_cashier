@@ -4,21 +4,17 @@ this repository contains the full copyright notices and license terms. -->
 <form>
     <label name="close"/>
     <field name="close" colspan="3"/>
-    <label name="date"/>
-    <field name="date"/>
     <label name="party"/>
     <field name="party"/>
-    <label name="bank"/>
-    <field name="bank"/>
-    <label name="receipt_type"/>
-    <field name="receipt_type"/>
-    <label name="reference"/>
-    <field name="reference"/>
-    <newline/>
+    <label name="advance"/>
+    <field name="advance"/>
     <label name="description"/>
     <field name="description" colspan="3"/>
-    <label name="amount"/>
-    <field name="amount"/>
-    <label name="bank_receipt"/>
-    <field name="bank_receipt"/>
+    <label name="affect_close_total"/>
+    <field name="affect_close_total"/>
+    <label name="account_alternate"/>
+    <field name="account_alternate"/>
+    <newline/>
+    <label name="amount_apply"/>
+    <field name="amount_apply"/>
 </form>

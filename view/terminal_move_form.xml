@@ -4,8 +4,17 @@ this repository contains the full copyright notices and license terms. -->
 <form>
     <label name="close"/>
     <field name="close" colspan="3"/>
-    <label name="ccterminal"/>
-    <field name="ccterminal"/>
+    <label name="terminal"/>
+    <field name="terminal"/>
+    <label name="amount"/>
+    <field name="amount"/>
+    <label name="amount_ignore"/>
+    <field name="amount_ignore"/>
+    <label name="amount_total"/>
+    <field name="amount_total"/>
+    <field name="types" colspan="4"/>
+
+<!--
     <label name="creditcard"/>
     <field name="creditcard"/>
     <label name="amount"/>
@@ -14,4 +23,5 @@ this repository contains the full copyright notices and license terms. -->
     <field name="commission"/>
     <label name="commission_amount"/>
     <field name="commission_amount"/>
+-->	
 </form>
