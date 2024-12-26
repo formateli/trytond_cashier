@@ -100,14 +100,14 @@ this repository contains the full copyright notices and license terms. -->
         <!-- Logs -->
 
         <record model="ir.model.access" id="access_group_log">
-            <field name="model" search="[('model', '=', 'cashier.close.log_action')]"/>
+	    <field name="model">cashier.close.log_action</field>
             <field name="perm_read" eval="True"/>
             <field name="perm_write" eval="False"/>
             <field name="perm_create" eval="False"/>
             <field name="perm_delete" eval="False"/>
         </record>
         <record model="ir.model.access" id="access_group_log_admin">
-            <field name="model" search="[('model', '=', 'cashier.close.log_action')]"/>
+	    <field name="model">cashier.close.log_action</field>
             <field name="group" ref="res.group_admin"/>
             <field name="perm_read" eval="True"/>
             <field name="perm_write" eval="True"/>
@@ -194,14 +194,14 @@ this repository contains the full copyright notices and license terms. -->
             action="act_close_form" id="menu_close_form"/>
 
         <record model="ir.model.access" id="access_close">
-            <field name="model" search="[('model', '=', 'cashier.close')]"/>
+	    <field name="model">cashier.close</field>
             <field name="perm_read" eval="True"/>
             <field name="perm_write" eval="False"/>
             <field name="perm_create" eval="False"/>
             <field name="perm_delete" eval="False"/>
         </record>
         <record model="ir.model.access" id="access_close_group_cashier">
-            <field name="model" search="[('model', '=', 'cashier.close')]"/>
+	    <field name="model">cashier.close</field>
             <field name="group" ref="group_cashier"/>
             <field name="perm_read" eval="True"/>
             <field name="perm_write" eval="True"/>
@@ -211,7 +211,7 @@ this repository contains the full copyright notices and license terms. -->
 
         <record model="ir.model.button" id="close_draft_button">
             <field name="name">draft</field>
-            <field name="model" search="[('model', '=', 'cashier.close')]"/>
+	    <field name="model">cashier.close</field>
         </record>
         <record model="ir.model.button-res.group"
                 id="close_draft_button_group_cashier">
@@ -221,7 +221,7 @@ this repository contains the full copyright notices and license terms. -->
 
         <record model="ir.model.button" id="close_confirm_button">
             <field name="name">confirm</field>
-            <field name="model" search="[('model', '=', 'cashier.close')]"/>
+	    <field name="model">cashier.close</field>
         </record>
         <record model="ir.model.button-res.group"
                 id="close_confirm_button_group_cashier_admin">
@@ -231,7 +231,7 @@ this repository contains the full copyright notices and license terms. -->
 
         <record model="ir.model.button" id="close_post_button">
             <field name="name">post</field>
-            <field name="model" search="[('model', '=', 'cashier.close')]"/>
+	    <field name="model">cashier.close</field>
         </record>
         <record model="ir.model.button-res.group"
                 id="close_post_button_group_cashier_admin">
@@ -241,7 +241,7 @@ this repository contains the full copyright notices and license terms. -->
 
         <record model="ir.model.button" id="close_cancel_button">
             <field name="name">cancel</field>
-            <field name="model" search="[('model', '=', 'cashier.close')]"/>
+	    <field name="model">cashier.close</field>
         </record>
         <record model="ir.model.button-res.group"
                 id="close_cancel_button_group_cashier_admin">

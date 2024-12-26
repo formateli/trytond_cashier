@@ -73,14 +73,14 @@ this repository contains the full copyright notices and license terms. -->
             parent="menu_configuration"/>
 
         <record model="ir.model.access" id="access_cashier">
-            <field name="model" search="[('model', '=', 'cashier.cashier')]"/>
+            <field name="model">cashier.cashier</field>
             <field name="perm_read" eval="True"/>
             <field name="perm_write" eval="False"/>
             <field name="perm_create" eval="False"/>
             <field name="perm_delete" eval="False"/>
         </record>
         <record model="ir.model.access" id="access_cashier_admin">
-            <field name="model" search="[('model', '=', 'cashier.cashier')]"/>
+	    <field name="model">cashier.cashier</field>
             <field name="group" ref="res.group_admin"/>
             <field name="perm_read" eval="True"/>
             <field name="perm_write" eval="True"/>
@@ -122,14 +122,14 @@ this repository contains the full copyright notices and license terms. -->
             parent="menu_configuration"/>
 
         <record model="ir.model.access" id="access_moneytypetype">
-            <field name="model" search="[('model', '=', 'cashier.terminal.moneytype.type')]"/>
+	    <field name="model">cashier.terminal.moneytype.type</field>
             <field name="perm_read" eval="True"/>
             <field name="perm_write" eval="False"/>
             <field name="perm_create" eval="False"/>
             <field name="perm_delete" eval="False"/>
         </record>
         <record model="ir.model.access" id="access_moneytypetype_admin">
-            <field name="model" search="[('model', '=', 'cashier.terminal.moneytype.type')]"/>
+	    <field name="model">cashier.terminal.moneytype.type</field>
             <field name="group" ref="res.group_admin"/>
             <field name="perm_read" eval="True"/>
             <field name="perm_write" eval="True"/>
@@ -196,14 +196,14 @@ this repository contains the full copyright notices and license terms. -->
             parent="menu_configuration"/>
 
         <record model="ir.model.access" id="access_discount">
-            <field name="model" search="[('model', '=', 'cashier.discount')]"/>
+	    <field name="model">cashier.discount</field>
             <field name="perm_read" eval="True"/>
             <field name="perm_write" eval="False"/>
             <field name="perm_create" eval="False"/>
             <field name="perm_delete" eval="False"/>
         </record>
         <record model="ir.model.access" id="access_discount_admin">
-            <field name="model" search="[('model', '=', 'cashier.discount')]"/>
+	    <field name="model">cashier.discount</field>
             <field name="group" ref="res.group_admin"/>
             <field name="perm_read" eval="True"/>
             <field name="perm_write" eval="True"/>
