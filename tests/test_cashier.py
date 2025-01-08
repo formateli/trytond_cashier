@@ -36,21 +36,44 @@ class CashierTestCase(ModuleTestCase):
             create_chart(company)
             create_fiscalyear(company)
 
+            #account_cash, = Account.search([
+            #        ('name', '=', 'Main Cash'),
+            #        ])
+            #account_revenue, = Account.search([
+            #        ('name', '=', 'Main Revenue'),
+            #        ])
+            #account_expense, = Account.search([
+            #        ('name', '=', 'Main Expense'),
+            #        ])
+            #account_receivable, = Account.search([
+            #        ('name', '=', 'Main Receivable'),
+            #        ])
+            #account_payable, = Account.search([
+            #        ('name', '=', 'Main Payable'),
+            #        ])
+
+
+
             account_cash, = Account.search([
-                    ('name', '=', 'Main Cash'),
+                    ('code', '=', '1.1.1'),
                     ])
             account_revenue, = Account.search([
-                    ('name', '=', 'Main Revenue'),
-                    ])
+                    ('type.revenue', '=', True),
+                    ('closed', '=', False),
+                    ], limit=1)
             account_expense, = Account.search([
-                    ('name', '=', 'Main Expense'),
-                    ])
+                    ('type.expense', '=', True),
+                    ('closed', '=', False),
+                    ], limit=1)
             account_receivable, = Account.search([
-                    ('name', '=', 'Main Receivable'),
-                    ])
+                    ('type.receivable', '=', True),
+                    ('closed', '=', False),
+                    ], limit=1)
             account_payable, = Account.search([
-                    ('name', '=', 'Main Payable'),
-                    ])
+                    ('type.payable', '=', True),
+                    ('closed', '=', False),
+                    ], limit=1)
+
 
             product_category = self._create_product_category(
                     account_expense, account_revenue
@@ -91,6 +114,8 @@ class CashierTestCase(ModuleTestCase):
 
             config_cash_bank = ConfigCashBank(
                     account_transfer=account_cash,
+                    default_collected_in_advanced_account=account_payable,
+                    default_paid_in_advanced_account=account_receivable
                 )
             config_cash_bank.save()
 
