@@ -1128,9 +1128,9 @@ class ColletedInAdvance(CloseDetailMixin):
         Advance = pool.get('cash_bank.advance')
         models = Advance._get_origin()
         models = Model.search([
-                ('model', 'in', models),
+                ('name', 'in', models),
                 ])
-        return [('', '')] + [(m.model, m.name) for m in models]
+        return [('', '')] + [(m.name, m.string) for m in models]
 
 
 class ColletedInAdvanceApply(CloseDetailMixin):

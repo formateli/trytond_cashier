@@ -514,7 +514,7 @@ class CashierTestCase(ModuleTestCase):
         Party = pool.get('party.party')
         Address = pool.get('party.address')
         addr = Address(
-            name=name,
+        #    name=name,
         )
         party = Party(
             name=name,
