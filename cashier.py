@@ -67,7 +67,10 @@ class Cashier(ModelSQL, ModelView):
     @classmethod
     def __setup__(cls):
         super(Cashier, cls).__setup__()
-        cls._order[0] = ('name', 'ASC')
+        cls._order = [
+                ('name', 'ASC'),
+                ('id', 'DESC')
+                ]
 
 
 class MoneyTerminal(ModelSQL, ModelView):
@@ -102,7 +105,10 @@ class MoneyTerminal(ModelSQL, ModelView):
     @classmethod
     def __setup__(cls):
         super(MoneyTerminal, cls).__setup__()
-        cls._order[0] = ('name', 'ASC')
+        cls._order = [
+                ('name', 'ASC'),
+                ('id', 'DESC')
+                ]
 
     @staticmethod
     def default_active():
@@ -272,7 +278,10 @@ class CashierDiscount(ModelSQL, ModelView):
     @classmethod
     def __setup__(cls):
         super(CashierDiscount, cls).__setup__()
-        cls._order[0] = ('name', 'ASC')
+        cls._order = [
+                ('name', 'ASC'),
+                ('id', 'DESC')
+                ]
 
     @staticmethod
     def default_active():
@@ -305,7 +314,10 @@ class MoneyTypeType(ModelSQL, ModelView):
     @classmethod
     def __setup__(cls):
         super(MoneyTypeType, cls).__setup__()
-        cls._order[0] = ('name', 'ASC')
+        cls._order = [
+                ('name', 'ASC'),
+                ('id', 'DESC')
+                ]
 
     @staticmethod
     def default_active():
